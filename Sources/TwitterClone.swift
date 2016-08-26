@@ -167,11 +167,15 @@ extension Post: Model {
         self.timestamp  = row["timestamp"] as! Date
     }
 }
-typealias JSONDictionary = [String : AnyObject]
+
+
+typealias JSONDictionary = [String : Any]
 
 extension Post: DictionaryConvertible {
     func toDictionary() -> JSONDictionary {
         var result = JSONDictionary()
+        // var result = [String:Any]()
+        
         result["id"]        = self.id
         result["user"]      = self.user
         result["body"]      = self.body

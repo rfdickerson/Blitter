@@ -19,7 +19,7 @@ import PackageDescription
 let package = Package(
     name: "TwitterClone",
     dependencies: [
-        .Package(url: "../Kassandra", majorVersion: 0, minor: 99),
+        .Package(url: "https://github.com/IBM-Swift/Kassandra", majorVersion: 0, minor: 1),
         .Package(url: "https://github.com/sandmman/Kitura.git", majorVersion: 0, minor: 28),
         .Package(url: "https://github.com/IBM-Swift/SwiftyJSON.git", majorVersion: 13, minor: 0)
         ]
