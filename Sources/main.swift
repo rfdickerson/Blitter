@@ -27,11 +27,13 @@ public let kassandra = Kassandra()
 
 let id = "follow/:id"
 
-router.get("/", handler: getAll)
+router.all("/*", middleware: BodyParser())
+router.get("/", handler: getMyFeed)
+router.get("/:user", handler: getUserTweets)
 router.post("/", handler: tweet)
-router.post(id, handler: follow)
+router.put("/:user", handler: followAuthor)
 
 
-Kitura.addHTTPServer(onPort: 8090, with: router)
+Kitura.addHTTPServer(onPort: 8080, with: router)
 
 Kitura.run()

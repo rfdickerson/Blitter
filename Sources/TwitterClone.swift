@@ -20,51 +20,67 @@ import Foundation
 import SwiftyJSON
 //import CredentialsFacebook
 
-public func tweet(request: RouterRequest, response: RouterResponse, next: () -> Void) {
+public func tweet(request: RouterRequest, response: RouterResponse, next: () -> Void) throws {
     
+    //let profile = request.userProfile
+    let userID = "Chia"
+
     guard let body = request.body else {
         response.status(.badRequest)
         return
     }
-    
+
     guard case let .json(json) = body else {
         response.status(.badRequest)
         return
     }
     
-    let user    = json["user"].stringValue
-    let message = json["body"].stringValue
-    let time    = DateFormatter().date(from: json["timestamp"].stringValue)!
+    let tweet = json["tweet"].stringValue
     
-    let post = Post(id: UUID(), user: user, body: message, timestamp: time)
-    
-    post.save() { _ in
+    try kassandra.connect(with: "twissandra") { result in
         
-        do {
-            try response.status(.OK).end()
+        kassandra.execute("select subscriber from subscription where author='\(userID)'"){ result in
+            let rows = result.asRows!
             
-        } catch {
-            print(error)
+            let subscribers: [String] = rows.map {
+                return $0["subscriber"] as! String
+            }
+            
+            let newTweets: [Tweets] = subscribers.map {
+                let tweet = Tweets(id: UUID(),
+                                   author: userID,
+                                   subscriber: $0,
+                                   tweet: tweet,
+                                   timestamp: Date())
+                return tweet
+            }
+            
+            newTweets.forEach { $0.save() { _ in } }
+            
+            do {
+                try response.status(.OK).end()
+                
+            } catch {
+                print(error)
+            }
+            
         }
+        
     }
-    
 }
 
-public func getAll(request: RouterRequest, response: RouterResponse, next: () -> Void) {
+public func getMyFeed(request: RouterRequest, response: RouterResponse, next: () -> Void) throws {
     
     //let userID: String = request.userProfile?.name
     
-    guard let userID = request.parameters["userID"] else {
+    /*guard let userID = request.parameters["userID"] else {
         response.status(.badRequest)
         return
-    }
+    }*/
+    let user = "Aaron"
     
-    Relationship.fetch(predicate: "user" == userID, limit: 50) { result, error in
-        
-        let friends = result!.map { $0.follower }
-                
-        Post.fetch(predicate: "user" > friends, limit: 50) { tweets, error in
-            
+    try kassandra.connect(with: "twissandra") { result in
+        Tweets.fetch(predicate: "subscriber" == user, limit: 50) { tweets, error in
             if let twts = tweets {
                 do {
                     try response.status(.OK).send(json: JSON(twts.toDictionary())).end()
@@ -74,36 +90,51 @@ public func getAll(request: RouterRequest, response: RouterResponse, next: () ->
                 }
             }
         }
-        
     }
-    
 }
 
-public func follow(request: RouterRequest, response: RouterResponse, next: () -> Void) {
-
-    guard let body = request.body else {
+public func getUserTweets(request: RouterRequest, response: RouterResponse, next: () -> Void) throws {
+    
+    guard let myUsername = request.parameters["user"] else {
         response.status(.badRequest)
         return
     }
     
-    guard case let .json(json) = body else {
-        response.status(.badRequest)
-        return
-    }
-    
-    let user1 = json["followee"].stringValue
-    let user2 = json["follower"].stringValue
-    
-    Relationship.insert([.id: UUID(), .follower: user1, .followee: user2]).execute { _ in
-        
-        do {
-            try response.status(.OK).end()
+    try kassandra.connect(with: "twissandra") { result in
+        Tweets.fetch(predicate: "author" == myUsername, limit: 50) { tweets, error in
 
-        } catch {
-            print(error)
+            if let twts = tweets {
+                do {
+                    let ret = twts.toDictionary()
+                    let retjson = JSON(ret)
+                    try response.status(.OK).send(json: retjson).end()
+                    
+                } catch {
+                    print(error)
+                }
+            }
         }
-        
+    }
+}
 
+
+public func followAuthor(request: RouterRequest, response: RouterResponse, next: () -> Void) throws {
+
+    let author = "Raymond"
+    
+    guard let myUsername = request.parameters["user"] else {
+        response.status(.badRequest)
+        return
+    }
+    try kassandra.connect(with: "twissandra") { _ in
+        Subscription.insert([.id: UUID(), .author: author, .subscriber: myUsername]).execute { result in
+            do {
+                try response.status(.OK).end()
+                
+            } catch {
+                print(error)
+            }
+        }
     }
 }
 
@@ -121,22 +152,26 @@ extension Array where Element : DictionaryConvertible {
     
 }
 
-struct Post {
+//create table tweetgroup(id uuid, followee text, follower text, tweet text, timestamp timestamp, primary key(id));
+
+struct Tweets {
     var id: UUID?
-    let user: String
-    let body: String
+    let author: String
+    let subscriber: String
+    let tweet: String
     let timestamp: Date
 }
 
-extension Post: Model {
+extension Tweets: Model {
     enum Field: String {
         case id = "id"
-        case user = "user"
-        case body  = "message"
+        case author = "author"
+        case subscriber = "subscriber"
+        case tweet  = "tweet"
         case timestamp = "timestamp"
     }
 
-    static let tableName = "Posts"
+    static let tableName = "Tweets"
     
     static var primaryKey: Field {
         return Field.id
@@ -145,8 +180,9 @@ extension Post: Model {
     static var fieldTypes: [Field: DataType] {
         return [
                 .id         : .uuid,
-                .user       : .text,
-                .body       : .text,
+                .author     : .text,
+                .subscriber : .text,
+                .tweet      : .text,
                 .timestamp  : .timestamp
                 ]
     }
@@ -162,8 +198,9 @@ extension Post: Model {
     
     init(row: Row) {
         self.id         = row["id"] as? UUID
-        self.user       = row["user"] as! String
-        self.body       = row["body"] as! String
+        self.author     = row["author"] as! String
+        self.subscriber = row["subscriber"] as! String
+        self.tweet      = row["tweet"] as! String
         self.timestamp  = row["timestamp"] as! Date
     }
 }
@@ -171,76 +208,42 @@ extension Post: Model {
 
 typealias JSONDictionary = [String : Any]
 
-extension Post: DictionaryConvertible {
+extension Tweets: DictionaryConvertible {
     func toDictionary() -> JSONDictionary {
         var result = JSONDictionary()
         // var result = [String:Any]()
         
-        result["id"]        = self.id
-        result["user"]      = self.user
-        result["body"]      = self.body
-        result["timestamp"] = self.timestamp
+        result["id"]        = "\(self.id!)"
+        result["author"]  = self.author
+        result["subscriber"]  = self.subscriber
+        result["tweet"]     = self.tweet
+        result["timestamp"] = "\(self.timestamp)"
 
         return result
     }
 }
-struct Users {
+
+struct Subscription {
     var id: UUID?
-    let name: String
+    let author: String
+    let subscriber: String
 }
 
-extension Users: Model {
-    enum Field: String {
-        case id = "id"
-        case name = "name"
-    }
-    
-    static let tableName = "Users"
-
-    static var primaryKey: Field {
-        return Field.id
-    }
-    
-    static var fieldTypes: [Field: DataType] {
-        return [.id  : .uuid, .name: .text]
-    }
-    
-    var key: UUID? {
-        get {
-            return self.id
-        }
-        set {
-            self.id = newValue
-        }
-    }
-    
-    init(row: Row) {
-        self.id         = row["id"] as? UUID
-        self.name       = row["name"] as! String
-    }
-}
-
-struct Relationship {
-    var id: UUID?
-    let followee: String
-    let follower: String
-}
-
-extension Relationship: Model {
+extension Subscription: Model {
     enum Field: String {
         case id         = "id"
-        case followee   = "followee"
-        case follower   = "follower"
+        case author   = "author"
+        case subscriber   = "subscriber"
     }
     
-    static let tableName = "Relationship"
+    static let tableName = "subscription"
     
     static var primaryKey: Field {
         return Field.id
     }
     
     static var fieldTypes: [Field: DataType] {
-        return [.id  : .uuid, .followee: .text, .follower: .text]
+        return [.id  : .uuid, .author: .text, .subscriber: .text]
     }
     
     var key: UUID? {
@@ -254,12 +257,20 @@ extension Relationship: Model {
     
     init(row: Row) {
         self.id         = row["id"] as? UUID
-        self.follower   = row["follower"] as! String
-        self.followee   = row["followee"] as! String
+        self.author     = row["author"] as! String
+        self.subscriber   = row["subscriber"] as! String
     }
 }
-//create keyspace twissandra with replication = {'class':'SimpleStrategy', 'replication_factor' : 1};
-//create table post(id uuid primary key, user text, body text, timestamp timestamp) ;
+
+// create keyspace twissandra with replication = {'class':'SimpleStrategy', 'replication_factor' : 1};
+// create table tweets(id uuid, author text, tweet text, subscriber text, timestamp timestamp, primary key(id));
+// create index on tweets(author);
+// create index on tweets(subscriber);
+// create table subscription(id uuid primary key, author text, subscriber text) ;
+// CREATE INDEX ON subscription(author);
+
+//insert into tweets(id, author, tweet, subscriber, timestamp) values (uuid(), 'Joseph', 'Done with School', 'Aaron', toTimestamp(now()));
+
+
+//create table tweets(id uuid primary key, user text, body text, timestamp timestamp) ;
 //create table user(id uuid primary key, name text) ;
-//create table relationship(id uuid primary key, followee text, follower text) ;
-//CREATE INDEX ON twissandra.relationship (follower);
