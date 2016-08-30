@@ -17,7 +17,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "TwitterClone",
+    name: "Blitter",
     dependencies: [
         .Package(url: "https://github.com/IBM-Swift/Kassandra",                   majorVersion: 0,  minor: 1),
         .Package(url: "https://github.com/IBM-Swift/Kitura.git",                  majorVersion: 0,  minor: 28),
