@@ -14,14 +14,11 @@
  * limitations under the License.
  **/
 
-import Kitura
-import Kassandra
 import Foundation
-
+import Kitura
 import Blitter
 
 let blitterController = BlitterController()
 
 Kitura.addHTTPServer(onPort: 8080, with: blitterController.router)
-
 Kitura.run()

@@ -17,12 +17,17 @@
 import Foundation
 import Kitura
 import XCTest
+import Dispatch
 
 @testable import Blitter
 
 class BlitterTests: XCTestCase {
 
 //    private var router: Router!
+    
+    private let queue = DispatchQueue(label: "Kitura runloop", qos: .userInitiated, attributes: .concurrent)
+    
+    private let blitterController = BlitterController()
     
     private var defaultSession: URLSession!
     
@@ -41,8 +46,14 @@ class BlitterTests: XCTestCase {
     
     override func setUp() {
         super.setUp()
-        // Put setup code here. This method is called before the invocation of each test method in the class.
+        
         defaultSession =  URLSession(configuration: .default)
+        
+        Kitura.addHTTPServer(onPort: 8080, with: blitterController.router)
+        
+        queue.async {
+            Kitura.run()
+        }
         //URLSession(configuration: URLSession.shared.configuration)
     }
     
