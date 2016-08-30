@@ -30,10 +30,6 @@ class BlitterTests: XCTestCase {
     
     private let blitterController = BlitterController()
     
-
-    
-
-    
     static var allTests : [(String, (BlitterTests) -> () throws -> Void)] {
         return [
             ("testFollowAuthor", testFollowAuthor),

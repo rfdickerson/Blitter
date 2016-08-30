@@ -43,7 +43,7 @@ public func bleet(request: RouterRequest, response: RouterResponse, next: @escap
     
     let kassandra = Kassandra()
     
-    let userID = "Chia"
+    let userID = "Robert"
     
     guard let body = request.body else {
         response.status(.badRequest)
@@ -96,7 +96,7 @@ public func getMyFeed(request: RouterRequest, response: RouterResponse, next: @e
      response.status(.badRequest)
      return
      }*/
-    let user = "Robert"
+    let user = "Jack"
     
     try kassandra.connect(with: "blitter") { result in
         Bleet.fetch(predicate: "subscriber" == user, limit: 50) { bleets, error in
