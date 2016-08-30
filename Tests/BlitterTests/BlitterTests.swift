@@ -30,11 +30,9 @@ class BlitterTests: XCTestCase {
     
     private let blitterController = BlitterController()
     
-    private var defaultSession: URLSession!
+
     
-    private var dataTask: URLSessionDataTask?
-    
-    private var uploadTask: URLSessionUploadTask?
+
     
     static var allTests : [(String, (BlitterTests) -> () throws -> Void)] {
         return [
@@ -49,7 +47,6 @@ class BlitterTests: XCTestCase {
         super.setUp()
         
         HeliumLogger.use()
-        defaultSession =  URLSession(configuration: .default)
         
         Kitura.addHTTPServer(onPort: 8080, with: blitterController.router)
         
@@ -61,17 +58,21 @@ class BlitterTests: XCTestCase {
     
     func testGetAllMyFeeds() {
         
+        let defaultSession = URLSession(configuration: .default)
+        
+        // let dataTask: URLSessionDataTask?
+        
         let expectation1 = expectation(description: "Get all my feeds")
         
-        if dataTask != nil {
-            dataTask?.cancel()
-        }
+//        if dataTask != nil {
+//            dataTask?.cancel()
+//        }
 
         var url: URLRequest = URLRequest(url: URL(string: "http://127.0.0.1:8080/")!)
         url.addValue("application/json", forHTTPHeaderField: "Content-Type")
         url.httpMethod = "GET"
         url.cachePolicy = URLRequest.CachePolicy.reloadIgnoringCacheData
-        dataTask = defaultSession.dataTask(with: url) {
+        let dataTask = defaultSession.dataTask(with: url) {
             data, response, error in
             XCTAssertNil(error)
             print(data)
@@ -84,7 +85,8 @@ class BlitterTests: XCTestCase {
                 }
             }
         }
-        dataTask?.resume()
+        
+        dataTask.resume()
         waitForExpectations(timeout: 5, handler: { _ in  })
 
     }
@@ -93,16 +95,15 @@ class BlitterTests: XCTestCase {
         
         let expectation1 = expectation(description: "Get all the user feeds")
         
-        if dataTask != nil {
-            dataTask?.cancel()
-        }
+        let defaultSession = URLSession(configuration: .default)
         
+
         let user: String = "Chia"
         var url: URLRequest = URLRequest(url: URL(string: "http://127.0.0.1:8080/\(user)")!)
         url.addValue("application/json", forHTTPHeaderField: "Content-Type")
         url.httpMethod = "GET"
         url.cachePolicy = URLRequest.CachePolicy.reloadIgnoringCacheData
-        dataTask = defaultSession.dataTask(with: url) {
+        let dataTask = defaultSession.dataTask(with: url) {
             data, response, error in
             XCTAssertNil(error)
             
@@ -113,7 +114,7 @@ class BlitterTests: XCTestCase {
                 }
             }
         }
-        dataTask?.resume()
+        dataTask.resume()
         waitForExpectations(timeout: 5, handler: { _ in  })
     }
     
@@ -121,16 +122,14 @@ class BlitterTests: XCTestCase {
         
         let expectation1 = expectation(description: "Follow the author")
         
-        if dataTask != nil {
-            dataTask?.cancel()
-        }
+        let defaultSession = URLSession(configuration: .default)
         
         let user: String = "rfdickerson"
         var url: URLRequest = URLRequest(url: URL(string: "http://127.0.0.1:8080/\(user)")!)
         url.addValue("application/json", forHTTPHeaderField: "Content-Type")
         url.httpMethod = "PUT"
         url.cachePolicy = URLRequest.CachePolicy.reloadIgnoringCacheData
-        dataTask = defaultSession.dataTask(with: url) {
+        let dataTask = defaultSession.dataTask(with: url) {
             data, response, error in
             XCTAssertNil(error)
             
@@ -141,7 +140,7 @@ class BlitterTests: XCTestCase {
                 }
             }
         }
-        dataTask?.resume()
+        dataTask.resume()
         waitForExpectations(timeout: 5, handler: { _ in  })
     }
     
@@ -149,9 +148,7 @@ class BlitterTests: XCTestCase {
         
         let expectation1 = expectation(description: "Post a tweet")
         
-        if dataTask != nil {
-            dataTask?.cancel()
-        }
+        let defaultSession = URLSession(configuration: .default)
         
         var url: URLRequest = URLRequest(url: URL(string: "http://127.0.0.1:8080/")!)
         url.addValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -161,7 +158,7 @@ class BlitterTests: XCTestCase {
         let json = "{\"message\": \"I just tweeted!\"}"
         
         url.httpBody = json.data(using: String.Encoding.utf8)
-        dataTask = defaultSession.dataTask(with: url) {
+        let dataTask = defaultSession.dataTask(with: url) {
             data, response, error in
             XCTAssertNil(error)
             
@@ -172,7 +169,8 @@ class BlitterTests: XCTestCase {
                 }
             }
         }
-        dataTask?.resume()
+        
+        dataTask.resume()
         waitForExpectations(timeout: 5, handler: { _ in  })
     }
 }
