@@ -27,18 +27,21 @@ class TwitterCloneTests: XCTestCase {
     
     private var dataTask: URLSessionDataTask?
     
+    private var uploadTask: URLSessionUploadTask?
+    
     static var allTests : [(String, (TwitterCloneTests) -> () throws -> Void)] {
         return [
             ("testExample", testExample),
-            ("testGetAllMyFeeds", testGetAllMyFeeds),
-            ("testGetUserTweets", testGetUserTweets)
+            ("testGetAllMyFeeds", testGetAllMyFeeds)
+//            ("testGetUserTweets", testGetUserTweets)
         ]
     }
     
     override func setUp() {
         super.setUp()
         // Put setup code here. This method is called before the invocation of each test method in the class.
-        defaultSession = URLSession(configuration: URLSessionConfiguration.default)
+        defaultSession =  URLSession(configuration: .default)
+        //URLSession(configuration: URLSession.shared.configuration)
     }
     
     func testExample() {
@@ -47,44 +50,101 @@ class TwitterCloneTests: XCTestCase {
         XCTAssertEqual("Hello, World!", "Hello, World!")
     }
     
-    func testGetAllMyFeeds() throws {
+    func testGetAllMyFeeds() {
 
         if dataTask != nil {
             dataTask?.cancel()
         }
 
-        let url: URL = URL(string: "http://127.0.0.1:8080")!
+        var url: URLRequest = URLRequest(url: URL(string: "http://127.0.0.1:8080/")!)
+        url.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        url.httpMethod = "GET"
+        url.cachePolicy = URLRequest.CachePolicy.reloadIgnoringCacheData
+        print("url maindocument: ", url.mainDocumentURL)
         dataTask = defaultSession.dataTask(with: url) {
             data, response, error in
             XCTAssertNil(error)
-            
+            print(data)
+            print(response)
+            print(error)
              if let httpResponse = response as? HTTPURLResponse {
                 if httpResponse.statusCode == 200 {
-
+                    print(String(data: data!, encoding: String.Encoding.utf8)!)
                 }
             }
         }
         dataTask?.resume()
     }
     
-    func testGetUserTweets() throws {
+    func testGetUserTweets() {
+        
         if dataTask != nil {
             dataTask?.cancel()
         }
         
         let user: String = "Chia"
-        let url: URL = URL(string: "http://127.0.0.1:8080/\(user)")!
+        var url: URLRequest = URLRequest(url: URL(string: "http://127.0.0.1:8080/\(user)")!)
+        url.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        url.httpMethod = "GET"
+        url.cachePolicy = URLRequest.CachePolicy.reloadIgnoringCacheData
         dataTask = defaultSession.dataTask(with: url) {
             data, response, error in
             XCTAssertNil(error)
             
             if let httpResponse = response as? HTTPURLResponse {
                 if httpResponse.statusCode == 200 {
-
+                    print(String(data: data!, encoding: String.Encoding.utf8)!)
                 }
             }
         }
         dataTask?.resume()
         
+    }
+    
+    func testFollowAuthor() {
+        
+        if dataTask != nil {
+            dataTask?.cancel()
+        }
+        
+        let user: String = "rfdickerson"
+        var url: URLRequest = URLRequest(url: URL(string: "http://127.0.0.1:8080/\(user)")!)
+        url.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        url.httpMethod = "PUT"
+        url.cachePolicy = URLRequest.CachePolicy.reloadIgnoringCacheData
+        uploadTask = defaultSession.uploadTask(with: url, from: url.httpBody) {
+            data, response, error in
+            XCTAssertNil(error)
+            
+            if let httpResponse = response as? HTTPURLResponse {
+                if httpResponse.statusCode == 200 {
+                    print(String(data: data!, encoding: String.Encoding.utf8)!)
+                }
+            }
+        }
+        dataTask?.resume()
+    }
+    
+    func testTweet() {
+        
+        if dataTask != nil {
+            dataTask?.cancel()
+        }
+        
+        var url: URLRequest = URLRequest(url: URL(string: "http://127.0.0.1:8080/")!)
+        url.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        url.httpMethod = "POST"
+        url.cachePolicy = URLRequest.CachePolicy.reloadIgnoringCacheData
+        uploadTask = defaultSession.uploadTask(with: url, from: url.httpBody) {
+            data, response, error in
+            XCTAssertNil(error)
+            
+            if let httpResponse = response as? HTTPURLResponse {
+                if httpResponse.statusCode == 200 {
+                    print(String(data: data!, encoding: String.Encoding.utf8)!)
+                }
+            }
+        }
+        dataTask?.resume()
     }
 }
