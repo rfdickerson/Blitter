@@ -129,7 +129,7 @@ class BlitterTests: XCTestCase {
         url.addValue("application/json", forHTTPHeaderField: "Content-Type")
         url.httpMethod = "PUT"
         url.cachePolicy = URLRequest.CachePolicy.reloadIgnoringCacheData
-        uploadTask = defaultSession.uploadTask(with: url, from: url.httpBody) {
+        dataTask = defaultSession.dataTask(with: url) {
             data, response, error in
             XCTAssertNil(error)
             
@@ -154,10 +154,11 @@ class BlitterTests: XCTestCase {
         
         var url: URLRequest = URLRequest(url: URL(string: "http://127.0.0.1:8080/")!)
         url.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        url.addValue("application/json", forHTTPHeaderField: "Accept")
         url.httpMethod = "POST"
         url.cachePolicy = URLRequest.CachePolicy.reloadIgnoringCacheData
         url.httpBody = Data(base64Encoded: "{\"message\": \"I just tweeted!\"}")
-        uploadTask = defaultSession.uploadTask(with: url, from: url.httpBody) {
+        dataTask = defaultSession.dataTask(with: url) {
             data, response, error in
             XCTAssertNil(error)
             
