@@ -19,6 +19,7 @@ import Kassandra
 import Foundation
 import SwiftyJSON
 import CredentialsFacebook
+import LoggerAPI
 
 public class BlitterController {
   
@@ -46,11 +47,13 @@ public func bleet(request: RouterRequest, response: RouterResponse, next: @escap
     
     guard let body = request.body else {
         response.status(.badRequest)
+        Log.warning("No body in the message")
         return
     }
     
     guard case let .json(json) = body else {
         response.status(.badRequest)
+        Log.warning("Body was not formed as JSON")
         return
     }
     

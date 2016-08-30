@@ -18,12 +18,12 @@ import Foundation
 import Kitura
 import XCTest
 import Dispatch
+import HeliumLogger
 
 @testable import Blitter
 
 class BlitterTests: XCTestCase {
-
-//    private var router: Router!
+    
     
     private let queue = DispatchQueue(label: "Kitura runloop", qos: .userInitiated, attributes: .concurrent)
     
@@ -39,14 +39,15 @@ class BlitterTests: XCTestCase {
         return [
             ("testFollowAuthor", testFollowAuthor),
             ("testGetAllMyFeeds", testGetAllMyFeeds),
-            ("testGetUserTweets", testGetUserTweets),
-            ("testTweet", testTweet)
+            ("testGetUserBleets", testGetUserBleets),
+            ("testBleet", testBleet)
         ]
     }
     
     override func setUp() {
         super.setUp()
         
+        HeliumLogger.use()
         defaultSession =  URLSession(configuration: .default)
         
         Kitura.addHTTPServer(onPort: 8080, with: blitterController.router)
@@ -87,7 +88,7 @@ class BlitterTests: XCTestCase {
 
     }
     
-    func testGetUserTweets() {
+    func testGetUserBleets() {
         
         let expectation1 = expectation(description: "Get all the user feeds")
         
@@ -143,7 +144,7 @@ class BlitterTests: XCTestCase {
         waitForExpectations(timeout: 5, handler: { _ in  })
     }
     
-    func testTweet() {
+    func testBleet() {
         
         let expectation1 = expectation(description: "Post a tweet")
         
