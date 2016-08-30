@@ -18,7 +18,7 @@ import Kitura
 import Kassandra
 import Foundation
 import SwiftyJSON
-//import CredentialsFacebook
+import CredentialsFacebook
 
 public func tweet(request: RouterRequest, response: RouterResponse, next: () -> Void) throws {
     
@@ -37,7 +37,7 @@ public func tweet(request: RouterRequest, response: RouterResponse, next: () -> 
     
     let tweet = json["tweet"].stringValue
     
-    try kassandra.connect(with: "twissandra") { result in
+    try kassandra.connect(with: "blitter") { result in
         
         kassandra.execute("select subscriber from subscription where author='\(userID)'"){ result in
             let rows = result.asRows!
@@ -77,9 +77,9 @@ public func getMyFeed(request: RouterRequest, response: RouterResponse, next: ()
         response.status(.badRequest)
         return
     }*/
-    let user = "Aaron"
+    let user = "Robert"
     
-    try kassandra.connect(with: "twissandra") { result in
+    try kassandra.connect(with: "blitter") { result in
         Tweets.fetch(predicate: "subscriber" == user, limit: 50) { tweets, error in
             if let twts = tweets {
                 do {
@@ -100,7 +100,7 @@ public func getUserTweets(request: RouterRequest, response: RouterResponse, next
         return
     }
     
-    try kassandra.connect(with: "twissandra") { result in
+    try kassandra.connect(with: "blitter") { result in
         Tweets.fetch(predicate: "author" == myUsername, limit: 50) { tweets, error in
 
             if let twts = tweets {
@@ -124,7 +124,7 @@ public func followAuthor(request: RouterRequest, response: RouterResponse, next:
         response.status(.badRequest)
         return
     }
-    try kassandra.connect(with: "twissandra") { _ in
+    try kassandra.connect(with: "blitter") { _ in
         Subscription.insert([.id: UUID(), .author: author, .subscriber: myUsername]).execute { result in
             do {
                 try response.status(.OK).end()
@@ -260,7 +260,7 @@ extension Subscription: Model {
     }
 }
 
-// create keyspace twissandra with replication = {'class':'SimpleStrategy', 'replication_factor' : 1};
+// create keyspace blitter with replication = {'class':'SimpleStrategy', 'replication_factor' : 1};
 // create table tweets(id uuid, author text, tweet text, subscriber text, timestamp timestamp, primary key(id));
 // create index on tweets(author);
 // create index on tweets(subscriber);
