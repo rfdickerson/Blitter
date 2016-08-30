@@ -17,9 +17,9 @@
 import Foundation
 import Kitura
 import XCTest
-import TwitterClone
+import Blitter
 
-class TwitterCloneTests: XCTestCase {
+class BlitterTests: XCTestCase {
 
 //    private var router: Router!
     
@@ -29,11 +29,12 @@ class TwitterCloneTests: XCTestCase {
     
     private var uploadTask: URLSessionUploadTask?
     
-    static var allTests : [(String, (TwitterCloneTests) -> () throws -> Void)] {
+    static var allTests : [(String, (BlitterTests) -> () throws -> Void)] {
         return [
-            ("testExample", testExample),
-            ("testGetAllMyFeeds", testGetAllMyFeeds)
-//            ("testGetUserTweets", testGetUserTweets)
+            ("testFollowAuthor", testFollowAuthor),
+            ("testGetAllMyFeeds", testGetAllMyFeeds),
+            ("testGetUserTweets", testGetUserTweets),
+            ("testTweet", testTweet)
         ]
     }
     
@@ -44,14 +45,10 @@ class TwitterCloneTests: XCTestCase {
         //URLSession(configuration: URLSession.shared.configuration)
     }
     
-    func testExample() {
-        // This is an example of a functional test case.
-        // Use XCTAssert and related functions to verify your tests produce the correct results.
-        XCTAssertEqual("Hello, World!", "Hello, World!")
-    }
-    
     func testGetAllMyFeeds() {
-
+        
+        let expectation1 = expectation(description: "Get all my feeds")
+        
         if dataTask != nil {
             dataTask?.cancel()
         }
@@ -60,7 +57,6 @@ class TwitterCloneTests: XCTestCase {
         url.addValue("application/json", forHTTPHeaderField: "Content-Type")
         url.httpMethod = "GET"
         url.cachePolicy = URLRequest.CachePolicy.reloadIgnoringCacheData
-        print("url maindocument: ", url.mainDocumentURL)
         dataTask = defaultSession.dataTask(with: url) {
             data, response, error in
             XCTAssertNil(error)
@@ -70,13 +66,18 @@ class TwitterCloneTests: XCTestCase {
              if let httpResponse = response as? HTTPURLResponse {
                 if httpResponse.statusCode == 200 {
                     print(String(data: data!, encoding: String.Encoding.utf8)!)
+                    expectation1.fulfill()
                 }
             }
         }
         dataTask?.resume()
+        waitForExpectations(timeout: 5, handler: { _ in  })
+
     }
     
     func testGetUserTweets() {
+        
+        let expectation1 = expectation(description: "Get all the user feeds")
         
         if dataTask != nil {
             dataTask?.cancel()
@@ -94,14 +95,17 @@ class TwitterCloneTests: XCTestCase {
             if let httpResponse = response as? HTTPURLResponse {
                 if httpResponse.statusCode == 200 {
                     print(String(data: data!, encoding: String.Encoding.utf8)!)
+                    expectation1.fulfill()
                 }
             }
         }
         dataTask?.resume()
-        
+        waitForExpectations(timeout: 5, handler: { _ in  })
     }
     
     func testFollowAuthor() {
+        
+        let expectation1 = expectation(description: "Follow the author")
         
         if dataTask != nil {
             dataTask?.cancel()
@@ -119,13 +123,17 @@ class TwitterCloneTests: XCTestCase {
             if let httpResponse = response as? HTTPURLResponse {
                 if httpResponse.statusCode == 200 {
                     print(String(data: data!, encoding: String.Encoding.utf8)!)
+                    expectation1.fulfill()
                 }
             }
         }
         dataTask?.resume()
+        waitForExpectations(timeout: 5, handler: { _ in  })
     }
     
     func testTweet() {
+        
+        let expectation1 = expectation(description: "Post a tweet")
         
         if dataTask != nil {
             dataTask?.cancel()
@@ -142,9 +150,11 @@ class TwitterCloneTests: XCTestCase {
             if let httpResponse = response as? HTTPURLResponse {
                 if httpResponse.statusCode == 200 {
                     print(String(data: data!, encoding: String.Encoding.utf8)!)
+                    expectation1.fulfill()
                 }
             }
         }
         dataTask?.resume()
+        waitForExpectations(timeout: 5, handler: { _ in  })
     }
 }
