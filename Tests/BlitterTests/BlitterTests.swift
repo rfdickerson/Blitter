@@ -19,6 +19,7 @@ import Kitura
 import XCTest
 import Dispatch
 import HeliumLogger
+import SwiftyJSON
 
 @testable import Blitter
 
@@ -157,7 +158,9 @@ class BlitterTests: XCTestCase {
         url.addValue("application/json", forHTTPHeaderField: "Accept")
         url.httpMethod = "POST"
         url.cachePolicy = URLRequest.CachePolicy.reloadIgnoringCacheData
-        url.httpBody = Data(base64Encoded: "{\"message\": \"I just tweeted!\"}")
+        let json = "{\"message\": \"I just tweeted!\"}"
+        
+        url.httpBody = json.data(using: String.Encoding.utf8)
         dataTask = defaultSession.dataTask(with: url) {
             data, response, error in
             XCTAssertNil(error)
