@@ -17,7 +17,8 @@
 import Foundation
 import Kitura
 import XCTest
-import Blitter
+
+@testable import Blitter
 
 class BlitterTests: XCTestCase {
 

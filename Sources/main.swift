@@ -44,14 +44,14 @@ router.get("/", handler: getMyFeed)
  
  curl localhost:8090/rfdickerson
 */
-router.get("/:user", handler: getUserTweets)
+router.get("/:user", handler: getUserFeed)
 
 /**
  Create a new tweet
  
  curl -X POST -d "{\"tweet\": \"I just tweeted!\"}" localhost:8090 
 */
-router.post("/", handler: tweet)
+router.post("/", handler: bleet)
 
 /**
  Follow a new author

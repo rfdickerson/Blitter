@@ -20,22 +20,22 @@ import Foundation
 import SwiftyJSON
 import CredentialsFacebook
 
-public func tweet(request: RouterRequest, response: RouterResponse, next: () -> Void) throws {
+public func bleet(request: RouterRequest, response: RouterResponse, next: @escaping () -> Void) throws {
     
     //let profile = request.userProfile
     let userID = "Chia"
-
+    
     guard let body = request.body else {
         response.status(.badRequest)
         return
     }
-
+    
     guard case let .json(json) = body else {
         response.status(.badRequest)
         return
     }
     
-    let tweet = json["tweet"].stringValue
+    let message = json["message"].stringValue
     
     try kassandra.connect(with: "blitter") { result in
         
@@ -46,23 +46,20 @@ public func tweet(request: RouterRequest, response: RouterResponse, next: () -> 
                 return $0["subscriber"] as! String
             }
             
-            let newTweets: [Tweets] = subscribers.map {
-                let tweet = Tweets(id: UUID(),
-                                   author: userID,
-                                   subscriber: $0,
-                                   tweet: tweet,
-                                   timestamp: Date())
-                return tweet
+            let newbleets: [Bleet] = subscribers.map {
+                let bleet = Bleet( id:          UUID(),
+                                   author:      userID,
+                                   subscriber:  $0,
+                                   message:     message,
+                                   postDate:    Date())
+                return bleet
             }
             
-            newTweets.forEach { $0.save() { _ in } }
+            newbleets.forEach { $0.save() { _ in } }
             
-            do {
-                try response.status(.OK).end()
-                
-            } catch {
-                print(error)
-            }
+            response.status(.OK)
+            next()
+            
             
         }
         
@@ -74,14 +71,14 @@ public func getMyFeed(request: RouterRequest, response: RouterResponse, next: ()
     //let userID: String = request.userProfile?.name
     
     /*guard let userID = request.parameters["userID"] else {
-        response.status(.badRequest)
-        return
-    }*/
+     response.status(.badRequest)
+     return
+     }*/
     let user = "Robert"
     
     try kassandra.connect(with: "blitter") { result in
-        Tweets.fetch(predicate: "subscriber" == user, limit: 50) { tweets, error in
-            if let twts = tweets {
+        Bleet.fetch(predicate: "subscriber" == user, limit: 50) { bleets, error in
+            if let twts = bleets {
                 do {
                     try response.status(.OK).send(json: JSON(twts.toDictionary())).end()
                     
@@ -93,7 +90,7 @@ public func getMyFeed(request: RouterRequest, response: RouterResponse, next: ()
     }
 }
 
-public func getUserTweets(request: RouterRequest, response: RouterResponse, next: () -> Void) throws {
+public func getUserFeed(request: RouterRequest, response: RouterResponse, next: () -> Void) throws {
     
     guard let myUsername = request.parameters["user"] else {
         response.status(.badRequest)
@@ -101,9 +98,9 @@ public func getUserTweets(request: RouterRequest, response: RouterResponse, next
     }
     
     try kassandra.connect(with: "blitter") { result in
-        Tweets.fetch(predicate: "author" == myUsername, limit: 50) { tweets, error in
-
-            if let twts = tweets {
+        Bleet.fetch(predicate: "author" == myUsername, limit: 50) { bleets, error in
+            
+            if let twts = bleets {
                 do {
                     try response.status(.OK).send(json: JSON(twts.toDictionary())).end()
                     
@@ -117,7 +114,7 @@ public func getUserTweets(request: RouterRequest, response: RouterResponse, next
 
 
 public func followAuthor(request: RouterRequest, response: RouterResponse, next: () -> Void) throws {
-
+    
     let author = "Raymond"
     
     guard let myUsername = request.parameters["user"] else {
@@ -150,26 +147,29 @@ extension Array where Element : DictionaryConvertible {
     
 }
 
-//create table tweetgroup(id uuid, followee text, follower text, tweet text, timestamp timestamp, primary key(id));
+//create table bleetgroup(id uuid, followee text, follower text, bleet text, timestamp timestamp, primary key(id));
 
-struct Tweets {
-    var id: UUID?
-    let author: String
-    let subscriber: String
-    let tweet: String
-    let timestamp: Date
+struct Bleet {
+    
+    var id          : UUID?
+    let author      : String
+    let subscriber  : String
+    let message     : String
+    let postDate    : Date
+    
 }
 
-extension Tweets: Model {
+extension Bleet: Model {
+    
     enum Field: String {
-        case id = "id"
-        case author = "author"
+        case id         = "id"
+        case author     = "author"
         case subscriber = "subscriber"
-        case tweet  = "tweet"
-        case timestamp = "timestamp"
+        case message    = "text"
+        case postDate   = "postdate"
     }
-
-    static let tableName = "Tweets"
+    
+    static let tableName = "bleet"
     
     static var primaryKey: Field {
         return Field.id
@@ -177,12 +177,12 @@ extension Tweets: Model {
     
     static var fieldTypes: [Field: DataType] {
         return [
-                .id         : .uuid,
-                .author     : .text,
-                .subscriber : .text,
-                .tweet      : .text,
-                .timestamp  : .timestamp
-                ]
+            .id         : .uuid,
+            .author     : .text,
+            .subscriber : .text,
+            .message    : .text,
+            .postDate   : .timestamp
+        ]
     }
     
     var key: UUID? {
@@ -195,28 +195,28 @@ extension Tweets: Model {
     }
     
     init(row: Row) {
-        self.id         = row["id"] as? UUID
-        self.author     = row["author"] as! String
+        self.id         = row["id"]         as? UUID
+        self.author     = row["author"]     as! String
         self.subscriber = row["subscriber"] as! String
-        self.tweet      = row["tweet"] as! String
-        self.timestamp  = row["timestamp"] as! Date
+        self.message    = row["message"]    as! String
+        self.postDate   = row["postdate"]   as! Date
     }
 }
 
 
 typealias JSONDictionary = [String : Any]
 
-extension Tweets: DictionaryConvertible {
+extension Bleet: DictionaryConvertible {
     func toDictionary() -> JSONDictionary {
         var result = JSONDictionary()
         // var result = [String:Any]()
         
-        result["id"]        = "\(self.id!)"
-        result["author"]  = self.author
+        result["id"]          = "\(self.id!)"
+        result["author"]      = self.author
         result["subscriber"]  = self.subscriber
-        result["tweet"]     = self.tweet
-        result["timestamp"] = "\(self.timestamp)"
-
+        result["message"]     = self.message
+        result["postdate"]    = "\(self.postDate)"
+        
         return result
     }
 }
@@ -230,8 +230,8 @@ struct Subscription {
 extension Subscription: Model {
     enum Field: String {
         case id         = "id"
-        case author   = "author"
-        case subscriber   = "subscriber"
+        case author     = "author"
+        case subscriber = "subscriber"
     }
     
     static let tableName = "subscription"
@@ -259,12 +259,3 @@ extension Subscription: Model {
         self.subscriber   = row["subscriber"] as! String
     }
 }
-
-// create keyspace blitter with replication = {'class':'SimpleStrategy', 'replication_factor' : 1};
-// create table tweets(id uuid, author text, tweet text, subscriber text, timestamp timestamp, primary key(id));
-// create index on tweets(author);
-// create index on tweets(subscriber);
-// create table subscription(id uuid primary key, author text, subscriber text) ;
-// create index on subscription(author);
-
-// insert into tweets(id, author, tweet, subscriber, timestamp) values (uuid(), 'Joseph', 'Done with School', 'Aaron', toTimestamp(now()));
