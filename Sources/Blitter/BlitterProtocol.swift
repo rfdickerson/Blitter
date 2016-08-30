@@ -14,14 +14,17 @@
  * limitations under the License.
  **/
 
-import Kitura
-import Kassandra
 import Foundation
 
-import Blitter
+import Kitura
 
-let blitterController = BlitterController()
-
-Kitura.addHTTPServer(onPort: 8080, with: blitterController.router)
-
-Kitura.run()
+protocol BlitterProtocol {
+    
+    var router: Router { get }
+    
+    func bleet(request: RouterRequest, response: RouterResponse, next: @escaping () -> Void) throws
+    func getMyFeed(request: RouterRequest, response: RouterResponse, next: @escaping () -> Void) throws
+    func getUserFeed(request: RouterRequest, response: RouterResponse, next: @escaping () -> Void) throws
+    func followAuthor(request: RouterRequest, response: RouterResponse, next: @escaping () -> Void) throws
+    
+}

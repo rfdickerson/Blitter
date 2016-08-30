@@ -20,11 +20,28 @@ import Foundation
 import SwiftyJSON
 import CredentialsFacebook
 
-public let kassandra = Kassandra()
+public class BlitterController {
+  
+    let kassandra = Kassandra()
+    public let router = Router()
+    
+    public init() {
+        router.all("/*", middleware: BodyParser())
+        router.get("/", handler: getMyFeed)
+        router.get("/:user", handler: getUserFeed)
+        router.post("/", handler: bleet)
+        router.put("/:user", handler: followAuthor)
+    }
+}
+
+extension BlitterController: BlitterProtocol {
 
 public func bleet(request: RouterRequest, response: RouterResponse, next: @escaping () -> Void) throws {
     
     //let profile = request.userProfile
+    
+    let kassandra = Kassandra()
+    
     let userID = "Chia"
     
     guard let body = request.body else {
@@ -68,7 +85,7 @@ public func bleet(request: RouterRequest, response: RouterResponse, next: @escap
     }
 }
 
-public func getMyFeed(request: RouterRequest, response: RouterResponse, next: () -> Void) throws {
+public func getMyFeed(request: RouterRequest, response: RouterResponse, next: @escaping () -> Void) throws {
     
     //let userID: String = request.userProfile?.name
     
@@ -92,7 +109,7 @@ public func getMyFeed(request: RouterRequest, response: RouterResponse, next: ()
     }
 }
 
-public func getUserFeed(request: RouterRequest, response: RouterResponse, next: () -> Void) throws {
+public func getUserFeed(request: RouterRequest, response: RouterResponse, next: @escaping () -> Void) throws {
     
     guard let myUsername = request.parameters["user"] else {
         response.status(.badRequest)
@@ -115,7 +132,7 @@ public func getUserFeed(request: RouterRequest, response: RouterResponse, next: 
 }
 
 
-public func followAuthor(request: RouterRequest, response: RouterResponse, next: () -> Void) throws {
+public func followAuthor(request: RouterRequest, response: RouterResponse, next: @escaping () -> Void) throws {
     
     let author = "Raymond"
     
@@ -135,20 +152,8 @@ public func followAuthor(request: RouterRequest, response: RouterResponse, next:
     }
 }
 
-protocol DictionaryConvertible {
-    func toDictionary() -> JSONDictionary
-}
 
-extension Array where Element : DictionaryConvertible {
-    
-    func toDictionary() -> [JSONDictionary] {
-        
-        return self.map { $0.toDictionary() }
-        
-    }
-    
 }
-
 
 
 

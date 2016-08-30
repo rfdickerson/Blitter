@@ -88,3 +88,17 @@ extension Bleet: DictionaryConvertible {
         return result
     }
 }
+
+protocol DictionaryConvertible {
+    func toDictionary() -> JSONDictionary
+}
+
+extension Array where Element : DictionaryConvertible {
+    
+    func toDictionary() -> [JSONDictionary] {
+        
+        return self.map { $0.toDictionary() }
+        
+    }
+    
+}

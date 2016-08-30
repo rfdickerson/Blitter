@@ -144,6 +144,7 @@ class BlitterTests: XCTestCase {
         url.addValue("application/json", forHTTPHeaderField: "Content-Type")
         url.httpMethod = "POST"
         url.cachePolicy = URLRequest.CachePolicy.reloadIgnoringCacheData
+        url.httpBody = Data(base64Encoded: "{\"message\": \"I just tweeted!\"}")
         uploadTask = defaultSession.uploadTask(with: url, from: url.httpBody) {
             data, response, error in
             XCTAssertNil(error)
