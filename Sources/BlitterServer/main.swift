@@ -18,12 +18,9 @@ import Kitura
 import Kassandra
 import Foundation
 
-
+import Blitter
 
 public let router = Router()
-
-public let kassandra = Kassandra()
-
 
 let id = "follow/:id"
 

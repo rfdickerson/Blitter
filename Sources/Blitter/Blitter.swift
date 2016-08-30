@@ -20,6 +20,8 @@ import Foundation
 import SwiftyJSON
 import CredentialsFacebook
 
+public let kassandra = Kassandra()
+
 public func bleet(request: RouterRequest, response: RouterResponse, next: @escaping () -> Void) throws {
     
     //let profile = request.userProfile
@@ -147,115 +149,6 @@ extension Array where Element : DictionaryConvertible {
     
 }
 
-//create table bleetgroup(id uuid, followee text, follower text, bleet text, timestamp timestamp, primary key(id));
-
-struct Bleet {
-    
-    var id          : UUID?
-    let author      : String
-    let subscriber  : String
-    let message     : String
-    let postDate    : Date
-    
-}
-
-extension Bleet: Model {
-    
-    enum Field: String {
-        case id         = "id"
-        case author     = "author"
-        case subscriber = "subscriber"
-        case message    = "text"
-        case postDate   = "postdate"
-    }
-    
-    static let tableName = "bleet"
-    
-    static var primaryKey: Field {
-        return Field.id
-    }
-    
-    static var fieldTypes: [Field: DataType] {
-        return [
-            .id         : .uuid,
-            .author     : .text,
-            .subscriber : .text,
-            .message    : .text,
-            .postDate   : .timestamp
-        ]
-    }
-    
-    var key: UUID? {
-        get {
-            return self.id
-        }
-        set {
-            self.id = newValue
-        }
-    }
-    
-    init(row: Row) {
-        self.id         = row["id"]         as? UUID
-        self.author     = row["author"]     as! String
-        self.subscriber = row["subscriber"] as! String
-        self.message    = row["message"]    as! String
-        self.postDate   = row["postdate"]   as! Date
-    }
-}
 
 
-typealias JSONDictionary = [String : Any]
 
-extension Bleet: DictionaryConvertible {
-    func toDictionary() -> JSONDictionary {
-        var result = JSONDictionary()
-        // var result = [String:Any]()
-        
-        result["id"]          = "\(self.id!)"
-        result["author"]      = self.author
-        result["subscriber"]  = self.subscriber
-        result["message"]     = self.message
-        result["postdate"]    = "\(self.postDate)"
-        
-        return result
-    }
-}
-
-struct Subscription {
-    var id: UUID?
-    let author: String
-    let subscriber: String
-}
-
-extension Subscription: Model {
-    enum Field: String {
-        case id         = "id"
-        case author     = "author"
-        case subscriber = "subscriber"
-    }
-    
-    static let tableName = "subscription"
-    
-    static var primaryKey: Field {
-        return Field.id
-    }
-    
-    static var fieldTypes: [Field: DataType] {
-        return [.id  : .uuid, .author: .text, .subscriber: .text]
-    }
-    
-    var key: UUID? {
-        get {
-            return self.id
-        }
-        set {
-            self.id = newValue
-        }
-    }
-    
-    init(row: Row) {
-        self.id         = row["id"] as? UUID
-        self.author     = row["author"] as! String
-        self.subscriber   = row["subscriber"] as! String
-    }
-}
