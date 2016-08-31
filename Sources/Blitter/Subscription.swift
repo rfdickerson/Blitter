@@ -25,11 +25,7 @@ struct Subscription {
 
 extension Subscription: Model {
     
-    enum Field: String {
-        case id         = "id"
-        case author     = "author"
-        case subscriber = "subscriber"
-    }
+    enum Field: String { case id, author, subscriber }
     
     static let tableName = "subscription"
     

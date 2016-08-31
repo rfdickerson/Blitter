@@ -30,11 +30,7 @@ struct Bleet {
 extension Bleet: Model {
     
     enum Field: String {
-        case id         = "id"
-        case author     = "author"
-        case subscriber = "subscriber"
-        case message    = "text"
-        case postDate   = "postdate"
+        case id, author, subscriber, message, postDate
     }
     
     static let tableName = "bleet"
