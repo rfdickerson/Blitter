@@ -2,6 +2,9 @@
 
 An demonstration that uses the [Kitura web framework](https://github.com/IBM-Swift/Kitura) to produce a feed of posts that people can follow.
 
+![](https://img.shields.io/badge/Swift-3.0-orange.svg?style=flat)
+![](https://img.shields.io/badge/Snapshot-8/25-blue.svg?style=flat)
+
 ## Requires:
 
  - [XCode 8 beta 6](https://developer.apple.com/)
