@@ -158,11 +158,13 @@ class BlitterTests: XCTestCase {
             data, response, error in
             XCTAssertNil(error)
             
-            if let httpResponse = response as? HTTPURLResponse {
-                if httpResponse.statusCode == 200 {
-                    print(String(data: data!, encoding: String.Encoding.utf8)!)
-                    expectation1.fulfill()
-                }
+            switch (response as? HTTPURLResponse)?.statusCode {
+            case 200?:
+                print(String(data: data!, encoding: String.Encoding.utf8)!)
+                expectation1.fulfill()
+
+            case nil:       XCTFail("response not HTTPURLResponse")
+            case let code?: XCTFail("bad status: \(code)")
             }
         }
         
