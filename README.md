@@ -1,4 +1,4 @@
-# Blitter - A Social Networking tool
+# Blitter - A Social Networking App Demo
 
 An demonstration that uses the [Kitura web framework](https://github.com/IBM-Swift/Kitura) to produce a feed of posts that people can follow.
 
