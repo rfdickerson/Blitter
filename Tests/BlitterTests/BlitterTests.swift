@@ -142,7 +142,7 @@ class BlitterTests: XCTestCase {
     
     func testBleet() {
         
-        let expectation1 = expectation(description: "Post a tweet")
+        let expectation1 = expectation(description: "Post a Bleet")
         
         let defaultSession = URLSession(configuration: .default)
         
@@ -151,7 +151,7 @@ class BlitterTests: XCTestCase {
         url.addValue("application/json", forHTTPHeaderField: "Accept")
         url.httpMethod = "POST"
         url.cachePolicy = URLRequest.CachePolicy.reloadIgnoringCacheData
-        let json = "{\"message\": \"I just tweeted!\"}"
+        let json = "{\"message\": \"I just Bleeted!\"}"
         
         url.httpBody = json.data(using: String.Encoding.utf8)
         let dataTask = defaultSession.dataTask(with: url) {
@@ -176,7 +176,7 @@ class BlitterTests: XCTestCase {
     func testBleetAndFollow() {
         
         
-        let expectation1 = expectation(description: "Post a tweet and receive it")
+        let expectation1 = expectation(description: "Post a bleet and receive it")
         
         let defaultSession = URLSession(configuration: .default)
         
@@ -185,7 +185,7 @@ class BlitterTests: XCTestCase {
         url.addValue("application/json", forHTTPHeaderField: "Accept")
         url.httpMethod = "POST"
         url.cachePolicy = URLRequest.CachePolicy.reloadIgnoringCacheData
-        let json = "{\"message\": \"I just tweeted!\"}"
+        let json = "{\"message\": \"I just bleeted!\"}"
         
         url.httpBody = json.data(using: String.Encoding.utf8)
         let dataTask = defaultSession.dataTask(with: url) {
