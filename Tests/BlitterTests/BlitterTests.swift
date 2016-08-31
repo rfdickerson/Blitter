@@ -109,16 +109,19 @@ class BlitterTests: XCTestCase {
         URLRequest(forTestWithMethod: "POST", message: message)
             .sendForTesting(expectation: expectation1) {
                 data, expectation in
-                URLRequest(forTestWithMethod: "GET")
+                URLRequest(forTestWithMethod: "GET", user: "Jack")
                     .sendForTesting(expectation: expectation1) {
                         data, expectation in
                         let obj: Any
                         do {  obj = try JSONSerialization.jsonObject(with: data)  }
                         catch { XCTFail("JSON error \(error.localizedDescription)"); return  }
                         guard let arr = obj as? [Any]  else { XCTFail("not array");  return  }
-                        guard arr.count == 1           else { XCTFail("bad count \(arr.count)"); return }
-                        guard let bleet = arr.first! as? [String: Any]  else {XCTFail("not a dictionary"); return }
-                        guard (bleet["message"] as? String) == message  else { XCTFail("bad bleet: \(bleet)") ; return }
+                        let messages = Set( arr.flatMap { ($0 as? [String: Any])?["message"] as? String} )
+                        guard messages.count == 2           else { XCTFail("bad count \(messages)"); return }
+                        guard messages.contains(message)  &&  messages.contains("Having a blast at Try! Swift")  else {
+                            XCTFail("bad messages: \(messages)")
+                            return
+                        }
                         expectation.fulfill()
                 }
         }
