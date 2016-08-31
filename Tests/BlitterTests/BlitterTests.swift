@@ -90,7 +90,7 @@ class BlitterTests: XCTestCase {
     
     func testBleet() {
         
-        let expectation1 = expectation(description: "Post a tweet")
+        let expectation1 = expectation(description: "Post a Bleet")
         let message = "I just tweeted!"
         URLRequest(forTestWithMethod: "POST", message: message)
             .sendForTesting(expectation: expectation1) {
@@ -101,11 +101,11 @@ class BlitterTests: XCTestCase {
         waitForExpectations(timeout: 5, handler: { _ in  })
     }
     
-    // Cannot store and retrieve a tweet yet; maybe someday:
+    // Cannot store and retrieve a Bleet yet; maybe someday:
     // too many hardwired user IDs in BitterController
     //    func testBleetAndFollow() {
     //
-    //        let expectation1 = expectation(description: "Post a tweet and receive it")
+    //        let expectation1 = expectation(description: "Post a Bleet and receive it")
     //        let message = "I just tweeted!"
     //        URLRequest(forTestWithMethod: "POST", message: message)
     //            .sendForTesting(expectation: expectation1) {
