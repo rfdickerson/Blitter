@@ -63,11 +63,7 @@ class BlitterTests: XCTestCase {
 //        if dataTask != nil {
 //            dataTask?.cancel()
 //        }
-
-        var url: URLRequest = URLRequest(url: URL(string: "http://127.0.0.1:8080/")!)
-        url.addValue("application/json", forHTTPHeaderField: "Content-Type")
-        url.httpMethod = "GET"
-        url.cachePolicy = URLRequest.CachePolicy.reloadIgnoringCacheData
+        let url = URLRequest(forTestWithMethod: "GET")
         let dataTask = defaultSession.dataTask(with: url) {
             data, response, error in
             XCTAssertNil(error)
@@ -92,13 +88,8 @@ class BlitterTests: XCTestCase {
         let expectation1 = expectation(description: "Get all the user feeds")
         
         let defaultSession = URLSession(configuration: .default)
-        
 
-        let user: String = "Chia"
-        var url: URLRequest = URLRequest(url: URL(string: "http://127.0.0.1:8080/\(user)")!)
-        url.addValue("application/json", forHTTPHeaderField: "Content-Type")
-        url.httpMethod = "GET"
-        url.cachePolicy = URLRequest.CachePolicy.reloadIgnoringCacheData
+        let url = URLRequest(forTestWithMethod: "GET", user: "Chia")
         let dataTask = defaultSession.dataTask(with: url) {
             data, response, error in
             XCTAssertNil(error)
@@ -120,11 +111,7 @@ class BlitterTests: XCTestCase {
         
         let defaultSession = URLSession(configuration: .default)
         
-        let user: String = "rfdickerson"
-        var url: URLRequest = URLRequest(url: URL(string: "http://127.0.0.1:8080/\(user)")!)
-        url.addValue("application/json", forHTTPHeaderField: "Content-Type")
-        url.httpMethod = "PUT"
-        url.cachePolicy = URLRequest.CachePolicy.reloadIgnoringCacheData
+        let url = URLRequest(forTestWithMethod: "PUT", user: "rfdickerson")
         let dataTask = defaultSession.dataTask(with: url) {
             data, response, error in
             XCTAssertNil(error)
@@ -146,14 +133,9 @@ class BlitterTests: XCTestCase {
         
         let defaultSession = URLSession(configuration: .default)
         
-        var url: URLRequest = URLRequest(url: URL(string: "http://127.0.0.1:8080/")!)
-        url.addValue("application/json", forHTTPHeaderField: "Content-Type")
-        url.addValue("application/json", forHTTPHeaderField: "Accept")
-        url.httpMethod = "POST"
-        url.cachePolicy = URLRequest.CachePolicy.reloadIgnoringCacheData
-        let json = "{\"message\": \"I just tweeted!\"}"
-        
-        url.httpBody = json.data(using: String.Encoding.utf8)
+        let message = "I just tweeted!"
+        let url = URLRequest(forTestWithMethod: "POST", message: message)
+
         let dataTask = defaultSession.dataTask(with: url) {
             data, response, error in
             XCTAssertNil(error)
@@ -175,51 +157,74 @@ class BlitterTests: XCTestCase {
     
     func testBleetAndFollow() {
         
-        
         let expectation1 = expectation(description: "Post a tweet and receive it")
         
         let defaultSession = URLSession(configuration: .default)
-        
-        var url: URLRequest = URLRequest(url: URL(string: "http://127.0.0.1:8080/")!)
-        url.addValue("application/json", forHTTPHeaderField: "Content-Type")
-        url.addValue("application/json", forHTTPHeaderField: "Accept")
-        url.httpMethod = "POST"
-        url.cachePolicy = URLRequest.CachePolicy.reloadIgnoringCacheData
-        let json = "{\"message\": \"I just tweeted!\"}"
-        
-        url.httpBody = json.data(using: String.Encoding.utf8)
+        let message = "I just tweeted!"
+        let url = URLRequest(forTestWithMethod: "POST", message: message)
         let dataTask = defaultSession.dataTask(with: url) {
             data, response, error in
             XCTAssertNil(error)
             
             switch (response as? HTTPURLResponse)?.statusCode {
-            case 200?:
-                var url: URLRequest = URLRequest(url: URL(string: "http://127.0.0.1:8080/")!)
-                url.addValue("application/json", forHTTPHeaderField: "Content-Type")
-                url.httpMethod = "GET"
-                url.cachePolicy = URLRequest.CachePolicy.reloadIgnoringCacheData
+            case nil:       XCTFail("response not HTTPURLResponse")
+            case let code? where code != 200: XCTFail("bad status: \(code)")
+                
+            default:
+                let url: URLRequest = URLRequest(forTestWithMethod: "GET")
                 let dataTask = defaultSession.dataTask(with: url) {
                     data, response, error in
                     XCTAssertNil(error)
                     
-                    if let httpResponse = response as? HTTPURLResponse {
-                        if httpResponse.statusCode == 200 {
-                            print(String(data: data!, encoding: String.Encoding.utf8)!)
-                            expectation1.fulfill()
+                    switch (response as? HTTPURLResponse)?.statusCode {
+                    case nil:       XCTFail("response not HTTPURLResponse")
+                    case let code? where code != 200: XCTFail("bad status: \(code)")
+                        
+                    default:
+                        
+                        guard let httpResponse = response as? HTTPURLResponse  else {
+                            XCTFail("bad type of response: \(type(of: response))")
+                            return
                         }
+                        guard httpResponse.statusCode == 200  else {
+                            XCTFail("bad statusCode \(httpResponse.statusCode)")
+                            return
+                        }
+                        guard let d = data  else { XCTFail("no data");  return }
+                        let obj: Any
+                        do {  obj = try JSONSerialization.jsonObject(with: d)  }
+                        catch { XCTFail("JSON error \(error.localizedDescription)"); return  }
+                        guard let arr = obj as? [Any]  else { XCTFail("not array");  return  }
+                        guard arr.count == 1           else { XCTFail("bad count \(arr.count)"); return }
+                        guard let bleet = arr.first! as? [String: Any]  else {XCTFail("not a dictionary"); return }
+                        guard (bleet["message"] as? String) == message  else { XCTFail("bad bleet: \(bleet)") ; return }
+                        expectation1.fulfill()
                     }
                 }
                 dataTask.resume()
-
-                
-            case nil:       XCTFail("response not HTTPURLResponse")
-            case let code?: XCTFail("bad status: \(code)")
             }
         }
         
         dataTask.resume()
-        waitForExpectations(timeout: 5, handler: { _ in  })
+        waitForExpectations(timeout: 10, handler: { _ in  })
+    }
+}
 
-        
+
+private extension URLRequest {
+    init(forTestWithMethod method: String, user: String = "", message: String? = nil) {
+        self.init(url: URL(string: "http://127.0.0.1:8080/" + user)!)
+        addValue("application/json", forHTTPHeaderField: "Content-Type")
+        switch method {
+        case "POST":
+            addValue("application/json", forHTTPHeaderField: "Accept")
+            httpBody = try! JSONSerialization.data(withJSONObject: ["message": message!])
+
+        default:
+            assert(message == nil)
+            break
+        }
+        httpMethod = method
+        cachePolicy = .reloadIgnoringCacheData
     }
 }
