@@ -54,103 +54,50 @@ class BlitterTests: XCTestCase {
     
     func testGetAllMyFeeds() {
         
-        let defaultSession = URLSession(configuration: .default)
-        
-        // let dataTask: URLSessionDataTask?
-        
         let expectation1 = expectation(description: "Get all my feeds")
-        
-//        if dataTask != nil {
-//            dataTask?.cancel()
-//        }
-        let url = URLRequest(forTestWithMethod: "GET")
-        let dataTask = defaultSession.dataTask(with: url) {
-            data, response, error in
-            XCTAssertNil(error)
-            print(data)
-            print(response)
-            print(error)
-             if let httpResponse = response as? HTTPURLResponse {
-                if httpResponse.statusCode == 200 {
-                    print(String(data: data!, encoding: String.Encoding.utf8)!)
-                    expectation1.fulfill()
-                }
-            }
+        URLRequest(forTestWithMethod: "GET")
+            .sendForTesting(expectation: expectation1)  {
+                data, expectation in
+                print(String(data: data, encoding: String.Encoding.utf8)!)
+                expectation.fulfill()
         }
-        
-        dataTask.resume()
         waitForExpectations(timeout: 5, handler: { _ in  })
-
     }
     
     func testGetUserBleets() {
         
         let expectation1 = expectation(description: "Get all the user feeds")
-        
-        let defaultSession = URLSession(configuration: .default)
-
-        let url = URLRequest(forTestWithMethod: "GET", user: "Chia")
-        let dataTask = defaultSession.dataTask(with: url) {
-            data, response, error in
-            XCTAssertNil(error)
-            
-            if let httpResponse = response as? HTTPURLResponse {
-                if httpResponse.statusCode == 200 {
-                    print(String(data: data!, encoding: String.Encoding.utf8)!)
-                    expectation1.fulfill()
-                }
-            }
+        URLRequest(forTestWithMethod: "GET", user: "Chia")
+            .sendForTesting(expectation: expectation1) {
+                data, expectation in
+                print(String(data: data, encoding: String.Encoding.utf8)!)
+                expectation.fulfill()
         }
-        dataTask.resume()
         waitForExpectations(timeout: 5, handler: { _ in  })
     }
     
     func testFollowAuthor() {
         
         let expectation1 = expectation(description: "Follow the author")
-        
-        let defaultSession = URLSession(configuration: .default)
-        
-        let url = URLRequest(forTestWithMethod: "PUT", user: "rfdickerson")
-        let dataTask = defaultSession.dataTask(with: url) {
-            data, response, error in
-            XCTAssertNil(error)
-            
-            if let httpResponse = response as? HTTPURLResponse {
-                if httpResponse.statusCode == 200 {
-                    print(String(data: data!, encoding: String.Encoding.utf8)!)
+        URLRequest(forTestWithMethod: "PUT", user: "rfdickerson")
+            .sendForTesting(expectation: expectation1) {
+                data, expectation in
+                    print(String(data: data, encoding: String.Encoding.utf8)!)
                     expectation1.fulfill()
-                }
-            }
         }
-        dataTask.resume()
         waitForExpectations(timeout: 5, handler: { _ in  })
     }
     
     func testBleet() {
         
         let expectation1 = expectation(description: "Post a tweet")
-        
-        let defaultSession = URLSession(configuration: .default)
-        
         let message = "I just tweeted!"
-        let url = URLRequest(forTestWithMethod: "POST", message: message)
-
-        let dataTask = defaultSession.dataTask(with: url) {
-            data, response, error in
-            XCTAssertNil(error)
-            
-            switch (response as? HTTPURLResponse)?.statusCode {
-            case 200?:
-                print(String(data: data!, encoding: String.Encoding.utf8)!)
-                expectation1.fulfill()
-
-            case nil:       XCTFail("response not HTTPURLResponse")
-            case let code?: XCTFail("bad status: \(code)")
-            }
+        URLRequest(forTestWithMethod: "POST", message: message)
+            .sendForTesting(expectation: expectation1) {
+                data, expectation in
+                print(String(data: data, encoding: String.Encoding.utf8)!)
+                expectation.fulfill()
         }
-        
-        dataTask.resume()
         waitForExpectations(timeout: 5, handler: { _ in  })
     }
     
@@ -158,55 +105,24 @@ class BlitterTests: XCTestCase {
     func testBleetAndFollow() {
         
         let expectation1 = expectation(description: "Post a tweet and receive it")
-        
-        let defaultSession = URLSession(configuration: .default)
         let message = "I just tweeted!"
-        let url = URLRequest(forTestWithMethod: "POST", message: message)
-        let dataTask = defaultSession.dataTask(with: url) {
-            data, response, error in
-            XCTAssertNil(error)
-            
-            switch (response as? HTTPURLResponse)?.statusCode {
-            case nil:       XCTFail("response not HTTPURLResponse")
-            case let code? where code != 200: XCTFail("bad status: \(code)")
-                
-            default:
-                let url: URLRequest = URLRequest(forTestWithMethod: "GET")
-                let dataTask = defaultSession.dataTask(with: url) {
-                    data, response, error in
-                    XCTAssertNil(error)
-                    
-                    switch (response as? HTTPURLResponse)?.statusCode {
-                    case nil:       XCTFail("response not HTTPURLResponse")
-                    case let code? where code != 200: XCTFail("bad status: \(code)")
-                        
-                    default:
-                        
-                        guard let httpResponse = response as? HTTPURLResponse  else {
-                            XCTFail("bad type of response: \(type(of: response))")
-                            return
-                        }
-                        guard httpResponse.statusCode == 200  else {
-                            XCTFail("bad statusCode \(httpResponse.statusCode)")
-                            return
-                        }
-                        guard let d = data  else { XCTFail("no data");  return }
+        URLRequest(forTestWithMethod: "POST", message: message)
+            .sendForTesting(expectation: expectation1) {
+                data, expectation in
+                URLRequest(forTestWithMethod: "GET")
+                    .sendForTesting(expectation: expectation1) {
+                        data, expectation in
                         let obj: Any
-                        do {  obj = try JSONSerialization.jsonObject(with: d)  }
+                        do {  obj = try JSONSerialization.jsonObject(with: data)  }
                         catch { XCTFail("JSON error \(error.localizedDescription)"); return  }
                         guard let arr = obj as? [Any]  else { XCTFail("not array");  return  }
                         guard arr.count == 1           else { XCTFail("bad count \(arr.count)"); return }
                         guard let bleet = arr.first! as? [String: Any]  else {XCTFail("not a dictionary"); return }
                         guard (bleet["message"] as? String) == message  else { XCTFail("bad bleet: \(bleet)") ; return }
-                        expectation1.fulfill()
-                    }
+                        expectation.fulfill()
                 }
-                dataTask.resume()
-            }
         }
-        
-        dataTask.resume()
-        waitForExpectations(timeout: 10, handler: { _ in  })
+        waitForExpectations(timeout: 5, handler: { _ in  })
     }
 }
 
@@ -226,5 +142,19 @@ private extension URLRequest {
         }
         httpMethod = method
         cachePolicy = .reloadIgnoringCacheData
+    }
+
+    func sendForTesting(expectation: XCTestExpectation,  fn: @escaping (Data, XCTestExpectation) -> Void ) {
+        let dataTask = URLSession(configuration: .default).dataTask(with: self) {
+            data, response, error in
+            XCTAssertNil(error)
+            XCTAssertNotNil(data)
+            switch (response as? HTTPURLResponse)?.statusCode {
+            case nil: XCTFail("bad response")
+            case 200?: fn(data!, expectation)
+            case let sc?: XCTFail("bad status \(sc)")
+            }
+        }
+        dataTask.resume()
     }
 }
