@@ -33,7 +33,7 @@ extension Bleet: Model {
         case id         = "id"
         case author     = "author"
         case subscriber = "subscriber"
-        case message    = "text"
+        case message    = "message"
         case postDate   = "postdate"
     }
     
