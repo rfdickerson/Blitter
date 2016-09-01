@@ -173,53 +173,54 @@ class BlitterTests: XCTestCase {
     }
     
     
-    func testBleetAndFollow() {
-        
-        
-        let expectation1 = expectation(description: "Post a bleet and receive it")
-        
-        let defaultSession = URLSession(configuration: .default)
-        
-        var url: URLRequest = URLRequest(url: URL(string: "http://127.0.0.1:8080/")!)
-        url.addValue("application/json", forHTTPHeaderField: "Content-Type")
-        url.addValue("application/json", forHTTPHeaderField: "Accept")
-        url.httpMethod = "POST"
-        url.cachePolicy = URLRequest.CachePolicy.reloadIgnoringCacheData
-        let json = "{\"message\": \"I just bleeted!\"}"
-        
-        url.httpBody = json.data(using: String.Encoding.utf8)
-        let dataTask = defaultSession.dataTask(with: url) {
-            data, response, error in
-            XCTAssertNil(error)
-            
-            switch (response as? HTTPURLResponse)?.statusCode {
-            case 200?:
-                var url: URLRequest = URLRequest(url: URL(string: "http://127.0.0.1:8080/")!)
-                url.addValue("application/json", forHTTPHeaderField: "Content-Type")
-                url.httpMethod = "GET"
-                url.cachePolicy = URLRequest.CachePolicy.reloadIgnoringCacheData
-                let dataTask = defaultSession.dataTask(with: url) {
-                    data, response, error in
-                    XCTAssertNil(error)
-                    
-                    if let httpResponse = response as? HTTPURLResponse {
-                        if httpResponse.statusCode == 200 {
-                            print(String(data: data!, encoding: String.Encoding.utf8)!)
-                            expectation1.fulfill()
-                        }
-                    }
-                }
-                dataTask.resume()
-
-                
-            case nil:       XCTFail("response not HTTPURLResponse")
-            case let code?: XCTFail("bad status: \(code)")
-            }
-        }
-        
-        dataTask.resume()
-        waitForExpectations(timeout: 5, handler: { _ in  })
-
-        
-    }
+//    func testBleetAndFollow() {
+//        
+//        
+//        let expectation1 = expectation(description: "Post a bleet and receive it")
+//        
+//        let defaultSession = URLSession(configuration: .default)
+//        
+//        var url: URLRequest = URLRequest(url: URL(string: "http://127.0.0.1:8080/")!)
+//        url.addValue("application/json", forHTTPHeaderField: "Content-Type")
+//        url.addValue("application/json", forHTTPHeaderField: "Accept")
+//        url.httpMethod = "POST"
+//        url.cachePolicy = URLRequest.CachePolicy.reloadIgnoringCacheData
+//        let json = "{\"message\": \"I just bleeted!\"}"
+//        
+//        url.httpBody = json.data(using: String.Encoding.utf8)
+//        let dataTask = defaultSession.dataTask(with: url) {
+//            data, response, error in
+//            XCTAssertNil(error)
+//            
+//            switch (response as? HTTPURLResponse)?.statusCode {
+//            case 200?:
+//                var url: URLRequest = URLRequest(url: URL(string: "http://127.0.0.1:8080/")!)
+//                url.addValue("application/json", forHTTPHeaderField: "Content-Type")
+//                url.httpMethod = "GET"
+//                url.cachePolicy = URLRequest.CachePolicy.reloadIgnoringCacheData
+//                let dataTask = defaultSession.dataTask(with: url) {
+//                    data, response, error in
+//                    XCTAssertNil(error)
+//                    
+//                    if let httpResponse = response as? HTTPURLResponse {
+//                        if httpResponse.statusCode == 200 {
+//                            print(String(data: data!, encoding: String.Encoding.utf8)!)
+//                            expectation1.fulfill()
+//                        }
+//                    }
+//                }
+//                dataTask.resume()
+//
+//                
+//            case nil:       XCTFail("response not HTTPURLResponse")
+//            case let code?: XCTFail("bad status: \(code)")
+//            }
+//        }
+//        
+//        dataTask.resume()
+//        waitForExpectations(timeout: 5, handler: { _ in  })
+//
+//        
+//    }
+    
 }
