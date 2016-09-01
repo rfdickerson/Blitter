@@ -49,8 +49,8 @@ extension Subscription: Model {
     }
     
     init(row: Row) {
-        self.id         = row["id"] as? UUID
-        self.author     = row["author"] as! String
-        self.subscriber   = row["subscriber"] as! String
+        self.id         = row[Field.id         .rawValue] as? UUID
+        self.author     = row[Field.author     .rawValue] as! String
+        self.subscriber = row[Field.subscriber .rawValue] as! String
     }
 }

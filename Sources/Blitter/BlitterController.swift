@@ -57,7 +57,7 @@ public func bleet(request: RouterRequest, response: RouterResponse, next: @escap
         return
     }
     
-    let message = json["message"].stringValue
+    let message = json[Bleet.FieldNames.message.rawValue].stringValue
     
     try kassandra.connect(with: "blitter") { result in
         
@@ -65,7 +65,7 @@ public func bleet(request: RouterRequest, response: RouterResponse, next: @escap
             let rows = result.asRows!
             
             let subscribers: [String] = rows.map {
-                return $0["subscriber"] as! String
+                return $0[Subscription.Field.subscriber.rawValue] as! String
             }
             
             let newbleets: [Bleet] = subscribers.map {
@@ -99,7 +99,7 @@ public func getMyFeed(request: RouterRequest, response: RouterResponse, next: @e
     let user = "Jack"
     
     try kassandra.connect(with: "blitter") { result in
-        Bleet.fetch(predicate: "subscriber" == user, limit: 50) { bleets, error in
+        Bleet.fetch(predicate: Bleet.Field.subscriber.rawValue == user, limit: 50) { bleets, error in
             if let twts = bleets {
                 do {
                     try response.status(.OK).send(json: JSON(twts.toDictionary())).end()
@@ -120,7 +120,7 @@ public func getUserFeed(request: RouterRequest, response: RouterResponse, next: 
     }
     
     try kassandra.connect(with: "blitter") { result in
-        Bleet.fetch(predicate: "author" == myUsername, limit: 50) { bleets, error in
+        Bleet.fetch(predicate: Bleet.Field.author.rawValue == myUsername, limit: 50) { bleets, error in
             
             if let twts = bleets {
                 do {

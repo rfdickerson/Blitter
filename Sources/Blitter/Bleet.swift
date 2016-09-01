@@ -33,7 +33,10 @@ struct Bleet {
 
 extension Bleet: Model {
     
-    typealias Field = FieldNames
+    enum Field: String {
+        case id, author, subscriber, message
+        case postDate = "postdate" // Cassandra stores column names in lowercase
+    }
     
     static let tableName = "bleet"
     
@@ -61,11 +64,11 @@ extension Bleet: Model {
     }
     
     init(row: Row) {
-        self.id         = row["id"]         as? UUID
-        self.author     = row["author"]     as! String
-        self.subscriber = row["subscriber"] as! String
-        self.message    = row["message"]    as! String
-        self.postDate   = row["postdate"]   as! Date
+        self.id         = row[Field.id         .rawValue]  as? UUID
+        self.author     = row[Field.author     .rawValue]  as! String
+        self.subscriber = row[Field.subscriber .rawValue]  as! String
+        self.message    = row[Field.message    .rawValue]  as! String
+        self.postDate   = row[Field.postDate   .rawValue]  as! Date
     }
 }
 
@@ -77,11 +80,11 @@ extension Bleet: DictionaryConvertible {
         var result = JSONDictionary()
         // var result = [String:Any]()
         
-        result["id"]          = "\(self.id!)"
-        result["author"]      = self.author
-        result["subscriber"]  = self.subscriber
-        result["message"]     = self.message
-        result["postdate"]    = "\(self.postDate)"
+        result[FieldNames.id         .rawValue]  = "\(self.id!)"
+        result[FieldNames.author     .rawValue]  = self.author
+        result[FieldNames.subscriber .rawValue]  = self.subscriber
+        result[FieldNames.message    .rawValue]  = self.message
+        result[FieldNames.postDate   .rawValue]  = "\(self.postDate)"
         
         return result
     }
