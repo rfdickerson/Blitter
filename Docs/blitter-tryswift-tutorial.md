@@ -88,19 +88,6 @@ let package = Package(
 ```
 
 ---
-# Importing packages
-
-```swift
-// main.swift
-import Foundation
-import Dispatch
-
-import Kitura
-import Kassandra
-import SwiftyJSON
-```
-
----
 
 # Steps
 
@@ -137,7 +124,24 @@ router.post("/") { request, response, next throws in
 }
 ```
 
+---
 
+# Make a controller
+
+```swift
+public class BlitterController {
+    
+    let kassandra = Kassandra()
+    public let router = Router()
+    
+    public init() {
+        router.get("/", handler: getMyFeed)
+        router.get("/:user", handler: getUserFeed)
+        router.post("/", handler: bleet)
+        router.put("/:user", handler: followAuthor)
+    }
+}
+```
 
 ---
 # Steps
@@ -204,7 +208,7 @@ struct Bleet {
 }
 
 extension Bleet : Model {
-  static let tableName = "Bleet"
+  static let tableName = "bleet"
   
   // other mapping goes here
 }
@@ -216,15 +220,16 @@ extension Bleet : Model {
 
 ```swift
 
-func getBleets(oncomplete: ([Bleet]?, Error?) -> Void) {
+func getBleets(oncomplete: Result<[Bleet] -> Void) {
   try kassandra.connect(with: "blitter") { _ in
     Post.fetch(limit: 50) { bleets, error in 
      
        guard let bleets = bleets else {
-          oncomplete( nil, error )
+          oncomplete( .error(BleetError.noBleets) )
        }
        
-       oncomplete( bleets.flatMap() { Bleet.init() }, nil )
+       let result = bleets.flatMap() { Bleet.init() }
+       oncomplete( .success(result) )
     }
 
   }
@@ -311,7 +316,7 @@ router.post("/") { request, response, next throws in
 [https://github.com/IBM-Swift/Blitter](https://github.com/IBM-Swift/Blitter)
 
 --- 
-# Todo List Examples
+# Todo List [^1]
 
 - TodoList **MongoDB**
 - TodoList **CouchDB**
@@ -323,9 +328,11 @@ router.post("/") { request, response, next throws in
 
 ![right fit](todolist2.png)
 
+[^1]: [https://github.com/IBM-Swift/TodoList-Boilerplate](https://github.com/IBM-Swift/TodoList-Boilerplate)
+
 ---
 
-# BluePic Web Example
+# BluePic Web Example[^1]
 
 - CouchDB
 - Object Storage
@@ -334,3 +341,5 @@ router.post("/") { request, response, next throws in
 - AngularJS frontend
 
 ![fit right ](bluepic.png)
+
+[^1]: [https://github.com/IBM-Swift/TodoList-Boilerplate](https://github.com/IBM-Swift/BluePic)
