@@ -30,6 +30,13 @@ enum BlitterError : Error {
 enum Result<T> {
     case success(T)
     case error(Error)
+    
+    var value: T? {
+        switch self {
+        case .success (let value): return value
+        case .error: return nil
+        }
+    }
 }
 
 extension RouterRequest {
