@@ -24,7 +24,7 @@ protocol StringValuePairConvertible {
 }
 
 extension Array where Element : StringValuePairConvertible {
-    func toDictionary() -> [StringValuePair] {
+    var stringValuePairs: [StringValuePair] {
         return self.map { $0.stringValuePairs }
     }
 }

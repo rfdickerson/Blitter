@@ -123,7 +123,7 @@ extension BlitterController: BlitterProtocol {
             Bleet.fetch(predicate: "subscriber" == userID, limit: 50) { bleets, error in
                 if let twts = bleets {
                     do {
-                        try response.status(.OK).send(json: JSON(twts.toDictionary())).end()
+                        try response.status(.OK).send(json: JSON(twts.stringValuePairs)).end()
                         
                     } catch {
                         print(error)
@@ -145,7 +145,7 @@ extension BlitterController: BlitterProtocol {
                 
                 if let twts = bleets {
                     do {
-                        try response.status(.OK).send(json: JSON(twts.toDictionary())).end()
+                        try response.status(.OK).send(json: JSON(twts.stringValuePairs)).end()
                         
                     } catch {
                         print(error)
