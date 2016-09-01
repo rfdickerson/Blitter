@@ -19,8 +19,8 @@ import Kitura
 import LoggerAPI
 import SwiftyJSON
 
-func authenticate(_ request: RouterRequest) -> String {
-    return request.userProfile?.id ?? "Robert"
+func authenticate(request: RouterRequest, defaultUser: String) -> String {
+    return request.userProfile?.id ?? defaultUser
 }
 
 enum BlitterError : Error {

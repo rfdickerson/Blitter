@@ -40,7 +40,7 @@ extension BlitterController: BlitterProtocol {
     
     public func bleet(request: RouterRequest, response: RouterResponse, next: @escaping () -> Void) throws {
         
-        let userID = authenticate(request)
+        let userID = authenticate(request: request, defaultUser: "Robert")
         
         let jsonResult = request.json
         guard let json = jsonResult else {
@@ -53,20 +53,20 @@ extension BlitterController: BlitterProtocol {
         
         try self.kassandra.connect(with: "blitter") { result in
             
-            self.kassandra.execute("select subscriber from subscription where author='\(userID)'"){ result in
+            let sql = "SELECT subscriber FROM subscription WHERE author='\(userID)'"
+            self.kassandra.execute(sql){ result in
                 let rows = result.asRows!
                 
-                let subscribers: [String] = rows.map {
-                    return $0["subscriber"] as! String
+                let subscribers: [String] = rows.flatMap {
+                    return $0["subscriber"] as? String
                 }
                 
                 let newbleets: [Bleet] = subscribers.map {
-                    let bleet = Bleet( id:          UUID(),
-                                       author:      userID,
-                                       subscriber:  $0,
-                                       message:     message,
-                                       postDate:    Date())
-                    return bleet
+                    return Bleet( id:          UUID(),
+                                  author:      userID,
+                                  subscriber:  $0,
+                                  message:     message,
+                                  postDate:    Date())
                 }
                 
                 newbleets.forEach { $0.save() { _ in } }
@@ -80,7 +80,7 @@ extension BlitterController: BlitterProtocol {
     
     public func getMyFeed(request: RouterRequest, response: RouterResponse, next: @escaping () -> Void) throws {
         
-        let userID = authenticate(request)
+        let userID = authenticate(request: request, defaultUser: "Jack")
         
         try kassandra.connect(with: "blitter") { result in
             Bleet.fetch(predicate: "subscriber" == userID, limit: 50) { bleets, error in
@@ -122,7 +122,7 @@ extension BlitterController: BlitterProtocol {
     
     public func followAuthor(request: RouterRequest, response: RouterResponse, next: @escaping () -> Void) throws {
         
-        let myUsername = authenticate(request)
+        let myUsername = authenticate(request: request, defaultUser: "Jack")
         
         guard let author = request.parameters["user"] else {
             response.status(.badRequest)

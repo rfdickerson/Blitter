@@ -49,21 +49,15 @@ class BlitterTests: XCTestCase {
         queue.async {
             Kitura.run()
         }
-        //URLSession(configuration: URLSession.shared.configuration)
+        
     }
     
     func testGetAllMyFeeds() {
         
         let defaultSession = URLSession(configuration: .default)
         
-        // let dataTask: URLSessionDataTask?
-        
         let expectation1 = expectation(description: "Get all my feeds")
         
-//        if dataTask != nil {
-//            dataTask?.cancel()
-//        }
-
         var url: URLRequest = URLRequest(url: URL(string: "http://127.0.0.1:8080/")!)
         url.addValue("application/json", forHTTPHeaderField: "Content-Type")
         url.httpMethod = "GET"
