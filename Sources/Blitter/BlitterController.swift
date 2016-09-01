@@ -35,25 +35,49 @@ public class BlitterController {
     }
 }
 
+
+func authenticate(_ request: RouterRequest) -> String {
+    return request.userProfile?.id ?? "Robert"
+}
+
+enum BlitterError : Error {
+    case noJSON
+}
+
+enum Result<T> {
+    case success(T)
+    case error(Error)
+}
+
+func getJSON(_ request: RouterRequest ) -> Result<JSON> {
+    
+    guard let body = request.body else {
+        Log.warning("No body in the message")
+        return .error(BlitterError.noJSON)
+    }
+    
+    guard case let .json(json) = body else {
+        Log.warning("Body was not formed as JSON")
+        return .error(BlitterError.noJSON)
+    }
+    
+    return .success(json)
+
+    
+}
+
 extension BlitterController: BlitterProtocol {
 
 public func bleet(request: RouterRequest, response: RouterResponse, next: @escaping () -> Void) throws {
     
-    //let profile = request.userProfile
+    let userID = authenticate(request)
     
     let kassandra = Kassandra()
     
-    let userID = "Robert"
-    
-    guard let body = request.body else {
+    let jsonResult = getJSON(request)
+    guard case let .success(json) = jsonResult else {
         response.status(.badRequest)
-        Log.warning("No body in the message")
-        return
-    }
-    
-    guard case let .json(json) = body else {
-        response.status(.badRequest)
-        Log.warning("Body was not formed as JSON")
+        next()
         return
     }
     
@@ -90,16 +114,10 @@ public func bleet(request: RouterRequest, response: RouterResponse, next: @escap
 
 public func getMyFeed(request: RouterRequest, response: RouterResponse, next: @escaping () -> Void) throws {
     
-    //let userID: String = request.userProfile?.name
-    
-    /*guard let userID = request.parameters["userID"] else {
-     response.status(.badRequest)
-     return
-     }*/
-    let user = "Jack"
+   let userID = authenticate(request)
     
     try kassandra.connect(with: "blitter") { result in
-        Bleet.fetch(predicate: "subscriber" == user, limit: 50) { bleets, error in
+        Bleet.fetch(predicate: "subscriber" == userID, limit: 50) { bleets, error in
             if let twts = bleets {
                 do {
                     try response.status(.OK).send(json: JSON(twts.toDictionary())).end()
@@ -137,9 +155,9 @@ public func getUserFeed(request: RouterRequest, response: RouterResponse, next: 
 
 public func followAuthor(request: RouterRequest, response: RouterResponse, next: @escaping () -> Void) throws {
     
-    let author = "Raymond"
+    let myUsername = authenticate(request)
     
-    guard let myUsername = request.parameters["user"] else {
+    guard let author = request.parameters["user"] else {
         response.status(.badRequest)
         return
     }
