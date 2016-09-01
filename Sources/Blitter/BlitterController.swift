@@ -36,49 +36,14 @@ public class BlitterController {
 }
 
 
-func authenticate(_ request: RouterRequest) -> String {
-    return request.userProfile?.id ?? "Robert"
-}
-
-enum BlitterError : Error {
-    case noJSON
-}
-
-enum Result<T> {
-    case success(T)
-    case error(Error)
-}
-
-extension RouterRequest {
-    
-    var json: Result<JSON> {
-        
-        guard let body = self.body else {
-            Log.warning("No body in the message")
-            return .error(BlitterError.noJSON)
-        }
-        
-        guard case let .json(json) = body else {
-            Log.warning("Body was not formed as JSON")
-            return .error(BlitterError.noJSON)
-        }
-        
-        return .success(json)
-        
-        
-    }
-}
-
 extension BlitterController: BlitterProtocol {
     
     public func bleet(request: RouterRequest, response: RouterResponse, next: @escaping () -> Void) throws {
         
         let userID = authenticate(request)
         
-        let kassandra = Kassandra()
-        
         let jsonResult = request.json
-        guard case let .success(json) = jsonResult else {
+        guard let json = jsonResult else {
             response.status(.badRequest)
             next()
             return
@@ -86,9 +51,9 @@ extension BlitterController: BlitterProtocol {
         
         let message = json["message"].stringValue
         
-        try kassandra.connect(with: "blitter") { result in
+        try self.kassandra.connect(with: "blitter") { result in
             
-            kassandra.execute("select subscriber from subscription where author='\(userID)'"){ result in
+            self.kassandra.execute("select subscriber from subscription where author='\(userID)'"){ result in
                 let rows = result.asRows!
                 
                 let subscribers: [String] = rows.map {
@@ -108,8 +73,6 @@ extension BlitterController: BlitterProtocol {
                 
                 response.status(.OK)
                 next()
-                
-                
             }
             
         }
@@ -137,6 +100,7 @@ extension BlitterController: BlitterProtocol {
         
         guard let myUsername = request.parameters["user"] else {
             response.status(.badRequest)
+            next()
             return
         }
         
@@ -162,6 +126,7 @@ extension BlitterController: BlitterProtocol {
         
         guard let author = request.parameters["user"] else {
             response.status(.badRequest)
+            next()
             return
         }
         try kassandra.connect(with: "blitter") { _ in
