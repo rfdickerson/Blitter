@@ -75,9 +75,8 @@ extension Bleet: Model {
 typealias JSONDictionary = [String : Any]
 
 extension Bleet: DictionaryConvertible {
-    func toDictionary() -> JSONDictionary {
+    var dictionary: JSONDictionary {
         var result = JSONDictionary()
-        // var result = [String:Any]()
         
         result["id"]          = "\(self.id!)"
         result["author"]      = self.author
@@ -90,14 +89,15 @@ extension Bleet: DictionaryConvertible {
 }
 
 protocol DictionaryConvertible {
-    func toDictionary() -> JSONDictionary
+    // func toDictionary() -> JSONDictionary
+    var dictionary: JSONDictionary {get}
 }
 
 extension Array where Element : DictionaryConvertible {
     
     func toDictionary() -> [JSONDictionary] {
         
-        return self.map { $0.toDictionary() }
+        return self.map { $0.dictionary }
         
     }
     
