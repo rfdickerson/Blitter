@@ -306,4 +306,31 @@ router.post("/") { request, response, next throws in
 
 ---
 
-# See it in action
+# Play with the code
+
+[https://github.com/IBM-Swift/Blitter](https://github.com/IBM-Swift/Blitter)
+
+--- 
+# Todo List Examples
+
+- TodoList **MongoDB**
+- TodoList **CouchDB**
+- TodoList **PostgreSQL**
+- TodoList **MySQL**
+- TodoList **DB2**
+- TodoList **SQLite**
+- TodoList **Redis**
+
+![right fit](todolist2.png)
+
+---
+
+# BluePic Web Example
+
+- CouchDB
+- Object Storage
+- Watson Vision and Weather
+- iOS frontend
+- AngularJS frontend
+
+![fit right ](bluepic.png)
