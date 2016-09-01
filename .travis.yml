@@ -28,6 +28,7 @@ before_install:
   - wget http://www.us.apache.org/dist/cassandra/3.7/apache-cassandra-3.7-bin.tar.gz && tar -xvzf apache-cassandra-3.7-bin.tar.gz
   - sudo sh ./apache-cassandra-3.7/bin/cassandra -R
   
+  - sleep 10
   - ./apache-cassandra-3.7/bin/cqlsh -f blitter.sql
 
 script:
