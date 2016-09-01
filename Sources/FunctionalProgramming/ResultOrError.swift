@@ -38,7 +38,7 @@ public enum ResultOrError<Result> {
         case .success: return self
         case .failure(let e):
             fn(e)
-            return .failure(Errors.alreadyHandled)
+            return .failure(AlreadyHandledError(error: e))
         }
     }
 }

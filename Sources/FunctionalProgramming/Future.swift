@@ -25,7 +25,6 @@ public class Future<Outcome> {
         fn()
     }
     
-    private let queue = DispatchQueue(label: "Future reader", qos: .userInitiated)
     
     public init() {}
     
@@ -33,7 +32,8 @@ public class Future<Outcome> {
     public func write(_ outcome: Outcome) -> Void {
         oneAtATime {
             if let reader = self.readerIfKnown {
-                self.queue.async {
+                DispatchQueue(label: "Future reader", qos: .userInitiated)
+                .async {
                     reader(outcome)
                 }
             }
@@ -42,22 +42,29 @@ public class Future<Outcome> {
             }
         }
     }
+    
     public func then<NewOutcome>(
+        qos: FutureQOS = .userInitiated,
         _ fn: @escaping (Outcome) -> Future<NewOutcome>
         )
         -> Future<NewOutcome>
     {
         let future = Future<NewOutcome>()
-        finally {
+        finally(qos: qos) {
             fn($0).finally(future.write)
         }
         return future
     }
     
-    public func finally(_ reader: @escaping (Outcome) -> Void) {
+    public func finally(
+        qos: FutureQOS = .userInitiated,
+        _ reader: @escaping (Outcome) -> Void
+        )
+    {
         oneAtATime {
             if let outcome = self.outcomeIfKnown {
-                self.queue.async {
+                DispatchQueue(label: "Future reader", qos: .userInitiated)
+                .async {
                     reader(outcome)
                 }
             }
@@ -73,7 +80,7 @@ public protocol ResultOrErrorProtocol {
     associatedtype Result
     var asResultOrError: ResultOrError<Result> { get }
 }
-public extension ResultOrError: ResultOrErrorProtocol {
+extension ResultOrError: ResultOrErrorProtocol {
     public var asResultOrError: ResultOrError { return self }
 }
 
@@ -111,7 +118,7 @@ public extension Future where Outcome: ResultOrErrorProtocol {
             case .success: future.write($0.asResultOrError)
             case .failure(let error):
                 fn(error)
-                future.write(.failure(Errors.alreadyHandled))
+                future.write(.failure(AlreadyHandledError(error: error)))
             }
         }
         return future

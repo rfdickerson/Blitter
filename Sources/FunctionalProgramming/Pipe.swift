@@ -24,47 +24,34 @@ public class Pipe<OutcomeParm> {
     public init(readerQueue: DispatchQueue) {
         self.readerQueue = readerQueue
     }
-    public convenience init(qos: AsynchronousOutcomeQOS) {
+    public convenience init(qos: FutureQOS) {
         self.init(readerQueue: qos.queue)
     }
     
-    public func readEach(
-        function: String = #function,
-        file: String = #file,
-        line: Int = #line,
-        
-        fn: @escaping (Outcome?) -> Void )
+    public func readEach(_ fn: @escaping (Outcome?) -> Void )
     {
-        let loc = SourceLocation(function: function, file: file, line: line)
         let me = self
         
         internalSynchronizationQueue.sync {
             assert(me.areWritesPossible)
             me.readFn = fn
             for outcome in me.outcomes {
-                me.dispatchAReadFrom(loc) { fn(outcome) }
+                me.dispatchARead { fn(outcome) }
             }
             me.outcomes.removeAll()
             if !me.areWritesPossible {
-                me.dispatchAReadFrom(loc) { fn(nil) }
+                me.dispatchARead { fn(nil) }
             }
         }
     }
     
     
-    public func readForEach(
-        function: String = #function,
-        file: String = #file,
-        line: Int = #line,
-        
-        eachFn: @escaping (Outcome) -> Void)
-        -> Future<Outcome?>
+    public func readForEach( eachFn: @escaping (Outcome) -> Void )  ->  Future<Outcome?>
     {
-        
         var finalOutcome: Outcome?
         let output = Future<Outcome?>()
         
-        readEach(function: function, file: file, line: line) {
+        readEach {
             switch $0 {
             case let outcome?:
                 finalOutcome = outcome
@@ -78,20 +65,13 @@ public class Pipe<OutcomeParm> {
     
     
     @discardableResult
-    public func write(
-        outcome: Outcome,
-        function: String = #function,
-        file: String = #file,
-        line: Int = #line
-        )
-        -> Should_be_Pipe_but_Swift_compiler_balks
+    public func write( _ outcome: Outcome )  ->  Me
     {
-        let loc = SourceLocation(function: function, file: file, line: line)
         let me = self
         internalSynchronizationQueue.sync {
             assert(me.areWritesPossible)
             if let fn = me.readFn  {
-                me.dispatchAReadFrom(loc) { fn(outcome) }
+                me.dispatchARead { fn(outcome) }
             }
             else {
                 me.outcomes.append(outcome)
@@ -100,35 +80,23 @@ public class Pipe<OutcomeParm> {
         return self
     }
     
-    public func close(
-        function: String = #function,
-        file: String = #file,
-        line: Int = #line
-        )
+    public func close()
     {
-        let loc = SourceLocation(function: function, file: file, line: line)
         let me = self
         internalSynchronizationQueue.sync {
             me.areWritesPossible = false
             if let fn = me.readFn {
-                me.dispatchAReadFrom(loc) { fn(nil) }
+                me.dispatchARead { fn(nil) }
             }
         }
     }
     
-    fileprivate func dispatchAReadFrom( _ loc: SourceLocation,  fn: @escaping () -> Void) {
+    fileprivate func dispatchARead( _ fn: @escaping () -> Void ) {
         readerQueue.async(execute: fn)
     }
 }
 
-public func writeToPipeOnReaderQueue<T>(
-    queue: DispatchQueue,
-    outcome: T,
-    function: String = #function,
-    file: String = #file,
-    line: Int = #line
-    )
-    -> Should_be_Pipe_but_Swift_compiler_balks<T>
+public func writeToPipe<T>( onQueue queue: DispatchQueue, outcome: T )  ->  Pipe<T>
 {
-    return Should_be_Pipe_but_Swift_compiler_balks<T>(readerQueue: queue).write(outcome: outcome, function: function, file: file, line: line)
+    return Pipe<T>(readerQueue: queue).write(outcome)
 }

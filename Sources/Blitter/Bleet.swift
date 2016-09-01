@@ -18,6 +18,10 @@ import Foundation
 import Kassandra
 
 struct Bleet {
+    enum FieldNames: String {
+        case id, author, subscriber, message, postDate
+    }
+
     
     var id          : UUID?
     let author      : String
@@ -29,9 +33,7 @@ struct Bleet {
 
 extension Bleet: Model {
     
-    enum Field: String {
-        case id, author, subscriber, message, postDate
-    }
+    typealias Field = FieldNames
     
     static let tableName = "bleet"
     
