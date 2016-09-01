@@ -22,7 +22,7 @@ import CredentialsFacebook
 import LoggerAPI
 
 public class BlitterController {
-  
+    
     let kassandra = Kassandra()
     public let router = Router()
     
@@ -49,100 +49,125 @@ enum Result<T> {
     case error(Error)
 }
 
-func getJSON(_ request: RouterRequest ) -> Result<JSON> {
+extension RouterRequest {
     
-    guard let body = request.body else {
-        Log.warning("No body in the message")
-        return .error(BlitterError.noJSON)
+    var json: Result<JSON> {
+        
+        guard let body = self.body else {
+            Log.warning("No body in the message")
+            return .error(BlitterError.noJSON)
+        }
+        
+        guard case let .json(json) = body else {
+            Log.warning("Body was not formed as JSON")
+            return .error(BlitterError.noJSON)
+        }
+        
+        return .success(json)
+        
+        
     }
-    
-    guard case let .json(json) = body else {
-        Log.warning("Body was not formed as JSON")
-        return .error(BlitterError.noJSON)
-    }
-    
-    return .success(json)
-
-    
 }
 
 extension BlitterController: BlitterProtocol {
-
-public func bleet(request: RouterRequest, response: RouterResponse, next: @escaping () -> Void) throws {
     
-    let userID = authenticate(request)
-    
-    let kassandra = Kassandra()
-    
-    let jsonResult = getJSON(request)
-    guard case let .success(json) = jsonResult else {
-        response.status(.badRequest)
-        next()
-        return
-    }
-    
-    let message = json["message"].stringValue
-    
-    try kassandra.connect(with: "blitter") { result in
+    public func bleet(request: RouterRequest, response: RouterResponse, next: @escaping () -> Void) throws {
         
-        kassandra.execute("select subscriber from subscription where author='\(userID)'"){ result in
-            let rows = result.asRows!
-            
-            let subscribers: [String] = rows.map {
-                return $0["subscriber"] as! String
-            }
-            
-            let newbleets: [Bleet] = subscribers.map {
-                let bleet = Bleet( id:          UUID(),
-                                   author:      userID,
-                                   subscriber:  $0,
-                                   message:     message,
-                                   postDate:    Date())
-                return bleet
-            }
-            
-            newbleets.forEach { $0.save() { _ in } }
-            
-            response.status(.OK)
+        let userID = authenticate(request)
+        
+        let kassandra = Kassandra()
+        
+        let jsonResult = request.json
+        guard case let .success(json) = jsonResult else {
+            response.status(.badRequest)
             next()
-            
-            
+            return
         }
         
-    }
-}
-
-public func getMyFeed(request: RouterRequest, response: RouterResponse, next: @escaping () -> Void) throws {
-    
-   let userID = authenticate(request)
-    
-    try kassandra.connect(with: "blitter") { result in
-        Bleet.fetch(predicate: "subscriber" == userID, limit: 50) { bleets, error in
-            if let twts = bleets {
-                do {
-                    try response.status(.OK).send(json: JSON(twts.toDictionary())).end()
-                    
-                } catch {
-                    print(error)
-                }
-            }
-        }
-    }
-}
-
-public func getUserFeed(request: RouterRequest, response: RouterResponse, next: @escaping () -> Void) throws {
-    
-    guard let myUsername = request.parameters["user"] else {
-        response.status(.badRequest)
-        return
-    }
-    
-    try kassandra.connect(with: "blitter") { result in
-        Bleet.fetch(predicate: "author" == myUsername, limit: 50) { bleets, error in
+        let message = json["message"].stringValue
+        
+        try kassandra.connect(with: "blitter") { result in
             
-            if let twts = bleets {
+            kassandra.execute("select subscriber from subscription where author='\(userID)'"){ result in
+                let rows = result.asRows!
+                
+                let subscribers: [String] = rows.map {
+                    return $0["subscriber"] as! String
+                }
+                
+                let newbleets: [Bleet] = subscribers.map {
+                    let bleet = Bleet( id:          UUID(),
+                                       author:      userID,
+                                       subscriber:  $0,
+                                       message:     message,
+                                       postDate:    Date())
+                    return bleet
+                }
+                
+                newbleets.forEach { $0.save() { _ in } }
+                
+                response.status(.OK)
+                next()
+                
+                
+            }
+            
+        }
+    }
+    
+    public func getMyFeed(request: RouterRequest, response: RouterResponse, next: @escaping () -> Void) throws {
+        
+        let userID = authenticate(request)
+        
+        try kassandra.connect(with: "blitter") { result in
+            Bleet.fetch(predicate: "subscriber" == userID, limit: 50) { bleets, error in
+                if let twts = bleets {
+                    do {
+                        try response.status(.OK).send(json: JSON(twts.toDictionary())).end()
+                        
+                    } catch {
+                        print(error)
+                    }
+                }
+            }
+        }
+    }
+    
+    public func getUserFeed(request: RouterRequest, response: RouterResponse, next: @escaping () -> Void) throws {
+        
+        guard let myUsername = request.parameters["user"] else {
+            response.status(.badRequest)
+            return
+        }
+        
+        try kassandra.connect(with: "blitter") { result in
+            Bleet.fetch(predicate: "author" == myUsername, limit: 50) { bleets, error in
+                
+                if let twts = bleets {
+                    do {
+                        try response.status(.OK).send(json: JSON(twts.toDictionary())).end()
+                        
+                    } catch {
+                        print(error)
+                    }
+                }
+            }
+        }
+    }
+    
+    
+    public func followAuthor(request: RouterRequest, response: RouterResponse, next: @escaping () -> Void) throws {
+        
+        let myUsername = authenticate(request)
+        
+        guard let author = request.parameters["user"] else {
+            response.status(.badRequest)
+            return
+        }
+        try kassandra.connect(with: "blitter") { _ in
+            Subscription.insert([.id: UUID(), .author: author, .subscriber: myUsername]).execute { result in
                 do {
-                    try response.status(.OK).send(json: JSON(twts.toDictionary())).end()
+                    try response.status(.OK).end()
                     
                 } catch {
                     print(error)
@@ -150,30 +175,8 @@ public func getUserFeed(request: RouterRequest, response: RouterResponse, next: 
             }
         }
     }
-}
-
-
-public func followAuthor(request: RouterRequest, response: RouterResponse, next: @escaping () -> Void) throws {
     
-    let myUsername = authenticate(request)
     
-    guard let author = request.parameters["user"] else {
-        response.status(.badRequest)
-        return
-    }
-    try kassandra.connect(with: "blitter") { _ in
-        Subscription.insert([.id: UUID(), .author: author, .subscriber: myUsername]).execute { result in
-            do {
-                try response.status(.OK).end()
-                
-            } catch {
-                print(error)
-            }
-        }
-    }
-}
-
-
 }
 
 
