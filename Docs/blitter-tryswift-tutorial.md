@@ -88,19 +88,6 @@ let package = Package(
 ```
 
 ---
-# Importing packages
-
-```swift
-// main.swift
-import Foundation
-import Dispatch
-
-import Kitura
-import Kassandra
-import SwiftyJSON
-```
-
----
 
 # Steps
 
@@ -137,7 +124,24 @@ router.post("/") { request, response, next throws in
 }
 ```
 
+---
 
+# Make a controller
+
+```swift
+public class BlitterController {
+    
+    let kassandra = Kassandra()
+    public let router = Router()
+    
+    public init() {
+        router.get("/", handler: getMyFeed)
+        router.get("/:user", handler: getUserFeed)
+        router.post("/", handler: bleet)
+        router.put("/:user", handler: followAuthor)
+    }
+}
+```
 
 ---
 # Steps
@@ -156,16 +160,14 @@ import Credentials
 import CredentialsFacebook
 
 let credentials = Credentials()
-let facebookCredentials = CredentialsFacebook()
-
-credentials.register(fbCredentials)
+credentials.register(CredentialsFacebook())
 
 
 ```
 
 --- 
 
-# Using the Credentials middlware
+# Using the Credentials middleware
 
 ```swift
 
@@ -195,39 +197,19 @@ router.post("/") { request, response, next in
 
 ```swift
 struct Bleet {
-
-  let id:           UUID
-  let user:         String
-  let message:      String
-  let postDate:     Date
-
+    
+    var id          : UUID?
+    let author      : String
+    let subscriber  : String
+    let message     : String
+    let postDate    : Date
+    
 }
 
 extension Bleet : Model {
-  static let tableName = "Bleet"
+  static let tableName = "bleet"
   
   // other mapping goes here
-}
-```
-
----
-
-## Get the list of Bleets
-
-```swift
-
-func getBleets(oncomplete: ([Bleet]?, Error?) -> Void) {
-  try kassandra.connect(with: "blitter") { _ in
-    Post.fetch(limit: 50) { bleets, error in 
-     
-       guard let bleets = bleets else {
-          oncomplete( nil, error )
-       }
-       
-       oncomplete( bleets.flatMap() { Bleet.init() }, nil )
-    }
-
-  }
 }
 ```
 
@@ -238,16 +220,102 @@ func getBleets(oncomplete: ([Bleet]?, Error?) -> Void) {
 
 ```swift
 
-let bleet = Bleet(id        : UUID(),
-                  user      : userId,
-                  body      : "I love Swift!",
-                  timestamp : Date()
+let bleet = Bleet(id         : UUID(),
+                  author     : "Robert",
+                  subscriber : "Chris"
+                  message    : "I love Swift!",
+                  postDate   : Date()
                   )
 
 try kassandra.connect(with: "blitter") { _ in
     bleet.save()
 }
 
+```
+
+---
+
+# Save a Bleet for each follower
+
+```swift
+// Get the subscribers ["Chris", "Ashley", "Emily"]
+let newbleets: [Bleet] = subscribers.map {
+       return Bleet( id:          UUID(),
+                     author:      userID,
+                     subscriber:  $0,
+                     message:     message,
+                     postDate:    Date())
+}
+                
+newbleets.forEach { $0.save() { _ in } }
+```
+
+---
+
+## Asynchrononous Error Handling
+
+```swift
+
+func doSomething(oncompletion: (Stuff?, Error?) -> Void) {
+
+}
+```
+
+---
+
+## Asynchrononous Error Handling :+1:
+
+```swift
+enum Result<T> {
+    case success(T)
+    case error(Error)
+    
+    var value: T? {
+        switch self {
+        case .success (let value): return value
+        case .error: return nil
+        }
+    }
+    
+    // Do same for error
+}
+```
+
+---
+
+## Get the list of Bleets
+
+```swift
+
+func getBleets(oncomplete: (Result<[Bleet]>) -> Void) {
+  try kassandra.connect(with: "blitter") { _ in
+    Post.fetch() { bleets, error in 
+     
+       if let error = error  {
+          oncomplete( .error(error) )
+       }
+       
+       let result = bleets.flatMap() { Bleet.init(withValuePair:) }
+       oncomplete( .success(result) )
+    }
+
+  }
+}
+```
+
+
+
+---
+
+## Get Bleets written by a user
+
+```swift
+Bleet.fetch(predicate: "author" == user, 
+            limit: 50) { bleets, error in 
+
+   /// 
+            
+}
 ```
 
 ___
@@ -262,22 +330,67 @@ ___
 
 --- 
 
+## String value pairs
+
+```swift
+typealias StringValuePair = [String : Any]
+
+protocol StringValuePairConvertible {
+    var stringValuePairs: StringValuePair {get}
+}
+
+```
+
+---
+
+## Make it work for collections too
+
+```swift
+extension Array where Element : StringValuePairConvertible {
+    var stringValuePairs: [StringValuePair] {
+        return self.map { $0.stringValuePairs }
+    }
+}
+```
+
+---
+
+## Bleet String value pairs
+
+```swift
+extension Bleet: StringValuePairConvertible {
+    var stringValuePairs: StringValuePair {
+        var result = StringValuePair()
+        
+        result["id"]          = "\(self.id!)"
+        result["author"]      = self.author
+        result["subscriber"]  = self.subscriber
+        result["message"]     = self.message
+        result["postdate"]    = "\(self.postDate)"
+
+        return result
+    }
+}
+```
+
+---
+
 ## Get back Blitter feed
 
 
 ```swift
 
 
-getBleets { bleets, error in
+getBleets { result in
             
-    guard let bleets = bleets else {
+    guard let bleets = result.value else {
         response.status(.badRequest).send()
         response.next()
         return
     }
                 
     response.status(.OK)
-        .send(json: JSON(bleets.toDictionary()))
+        .send(json: JSON(bleets.stringValuePairs))
         response.next()
     }
 }
@@ -286,24 +399,80 @@ getBleets { bleets, error in
 
 ---
 
-## Save a post
+## Get JSON from the request
 
 ```swift
-router.post("/") { request, response, next throws in
-   
-   guard let httpBody = request.body else { /* ... */ }
-   guard case let .json(json) = body else { /* ... */ }
-   guard let message = json["message"].stringValue { /* ... */ }
-   
-   let bleet = Bleet(id: UUID(), message, Date(), userId)
-   saveBleet(bleet)
-       .onSuccess {
-          response.status(.OK).send().end()
-       }
+
+extension RouterRequest {
+    
+    var json: JSON? {
+        
+        guard let body = self.body else {
+            Log.warning("No body in the message")
+            return nil
+        }
+        
+        guard case let .json(json) = body else {
+            Log.warning("Body was not formed as JSON")
+            return nil
+        }
+        
+        return json
+    }
 }
 
 ```
 
+--- 
+## Save the Bleet
+
+```swift
+      
+let userID = authenticate(request: request)
+        
+let jsonResult = request.json
+guard let json = jsonResult else {
+    response.status(.badRequest)
+    next()
+    return
+}
+        
+let message = json["message"].stringValue
+
+// Save the Bleets with author matching userID
+```
+
 ---
 
-# See it in action
+# Play with the code
+
+[https://github.com/IBM-Swift/Blitter](https://github.com/IBM-Swift/Blitter)
+
+--- 
+# Todo List [^1]
+
+- TodoList **MongoDB**
+- TodoList **CouchDB**
+- TodoList **PostgreSQL**
+- TodoList **MySQL**
+- TodoList **DB2**
+- TodoList **SQLite**
+- TodoList **Redis**
+
+![right fit](todolist2.png)
+
+[^1]: [https://github.com/IBM-Swift/TodoList-Boilerplate](https://github.com/IBM-Swift/TodoList-Boilerplate)
+
+---
+
+# BluePic Web Example[^1]
+
+- CouchDB
+- Object Storage
+- Watson Vision and Weather
+- iOS frontend
+- AngularJS frontend
+
+![fit right ](bluepic.png)
+
+[^1]: [https://github.com/IBM-Swift/TodoList-Boilerplate](https://github.com/IBM-Swift/BluePic)

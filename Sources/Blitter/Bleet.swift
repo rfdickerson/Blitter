@@ -73,12 +73,11 @@ extension Bleet: Model {
 }
 
 
-typealias JSONDictionary = [String : Any]
 
-extension Bleet: DictionaryConvertible {
-    func toDictionary() -> JSONDictionary {
-        var result = JSONDictionary()
-        // var result = [String:Any]()
+
+extension Bleet: StringValuePairConvertible {
+    var stringValuePairs: StringValuePair {
+        var result = StringValuePair()
         
         result[FieldNames.id         .rawValue]  = "\(self.id!)"
         result[FieldNames.author     .rawValue]  = self.author
@@ -90,16 +89,3 @@ extension Bleet: DictionaryConvertible {
     }
 }
 
-protocol DictionaryConvertible {
-    func toDictionary() -> JSONDictionary
-}
-
-extension Array where Element : DictionaryConvertible {
-    
-    func toDictionary() -> [JSONDictionary] {
-        
-        return self.map { $0.toDictionary() }
-        
-    }
-    
-}

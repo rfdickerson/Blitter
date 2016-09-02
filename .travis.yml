@@ -28,8 +28,8 @@ before_install:
   - wget http://www.us.apache.org/dist/cassandra/3.7/apache-cassandra-3.7-bin.tar.gz && tar -xvzf apache-cassandra-3.7-bin.tar.gz
   - sudo sh ./apache-cassandra-3.7/bin/cassandra -R
   
-  - pip install cqlsh
-  - cqlsh -f blitter.sql
+  - sleep 10
+  - ./apache-cassandra-3.7/bin/cqlsh -f blitter.sql
 
 script:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then swift build -Xcc -fblocks -Xcc -I/usr/local/opt/openssl/include -Xlinker -L/usr/local/opt/openssl/lib ; fi

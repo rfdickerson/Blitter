@@ -49,7 +49,7 @@ class BlitterTests: XCTestCase {
         queue.async {
             Kitura.run()
         }
-        //URLSession(configuration: URLSession.shared.configuration)
+        
     }
     
     func testGetAllMyFeeds() {
@@ -60,7 +60,7 @@ class BlitterTests: XCTestCase {
                 data, expectation in
                 print(String(data: data, encoding: String.Encoding.utf8)!)
                 expectation.fulfill()
-        }
+                }
         waitForExpectations(timeout: 5, handler: { _ in  })
     }
     
@@ -72,7 +72,7 @@ class BlitterTests: XCTestCase {
                 data, expectation in
                 print(String(data: data, encoding: String.Encoding.utf8)!)
                 expectation.fulfill()
-        }
+                }
         waitForExpectations(timeout: 5, handler: { _ in  })
     }
     
@@ -84,7 +84,7 @@ class BlitterTests: XCTestCase {
                 data, expectation in
                     print(String(data: data, encoding: String.Encoding.utf8)!)
                     expectation1.fulfill()
-        }
+                }
         waitForExpectations(timeout: 5, handler: { _ in  })
     }
     
@@ -97,10 +97,10 @@ class BlitterTests: XCTestCase {
                 data, expectation in
                 print(String(data: data, encoding: String.Encoding.utf8)!)
                 expectation.fulfill()
-        }
+            }
         waitForExpectations(timeout: 5, handler: { _ in  })
-    }
-
+        }
+        
     // Cannot store and retrieve a Bleet yet; maybe someday:
     // too many hardwired user IDs in BitterController
     //    func testBleetAndFollow() {
@@ -128,9 +128,9 @@ class BlitterTests: XCTestCase {
     //        }
     //        waitForExpectations(timeout: 5, handler: { _ in  })
     //    }
-}
-
-
+    }
+    
+    
 private extension URLRequest {
     init(forTestWithMethod method: String, user: String = "", message: String? = nil) {
         self.init(url: URL(string: "http://127.0.0.1:8080/" + user)!)
@@ -139,7 +139,7 @@ private extension URLRequest {
         case "POST":
             addValue("application/json", forHTTPHeaderField: "Accept")
             httpBody = try! JSONSerialization.data(withJSONObject: [Bleet.FieldNames.message.rawValue: message!])
-
+    
         default:
             assert(message == nil)
             break
@@ -157,7 +157,7 @@ private extension URLRequest {
             case nil: XCTFail("bad response")
             case 200?: fn(data!, expectation)
             case let sc?: XCTFail("bad status \(sc)")
-            }
+}
         }
         dataTask.resume()
     }
