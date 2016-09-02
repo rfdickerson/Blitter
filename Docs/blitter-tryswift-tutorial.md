@@ -235,19 +235,67 @@ try kassandra.connect(with: "blitter") { _ in
 
 ---
 
+# Save a Bleet for each follower
+
+```swift
+// Get the subscribers ["Chris", "Ashley", "Emily"]
+let newbleets: [Bleet] = subscribers.map {
+       return Bleet( id:          UUID(),
+                     author:      userID,
+                     subscriber:  $0,
+                     message:     message,
+                     postDate:    Date())
+}
+                
+newbleets.forEach { $0.save() { _ in } }
+```
+
+---
+
+## Asynchrononous Error Handling
+
+```swift
+
+func doSomething(oncompletion: (Stuff?, Error?) -> Void) {
+
+}
+```
+
+---
+
+## Asynchrononous Error Handling :+1:
+
+```swift
+enum Result<T> {
+    case success(T)
+    case error(Error)
+    
+    var value: T? {
+        switch self {
+        case .success (let value): return value
+        case .error: return nil
+        }
+    }
+    
+    // Do same for error
+}
+```
+
+---
+
 ## Get the list of Bleets
 
 ```swift
 
 func getBleets(oncomplete: (Result<[Bleet]>) -> Void) {
   try kassandra.connect(with: "blitter") { _ in
-    Post.fetch(limit: 50) { bleets, error in 
+    Post.fetch() { bleets, error in 
      
        if let error = error  {
           oncomplete( .error(error) )
        }
        
-       let result = bleets.flatMap() { Bleet.init }
+       let result = bleets.flatMap() { Bleet.init(withValuePair:) }
        oncomplete( .success(result) )
     }
 
@@ -282,6 +330,51 @@ ___
 
 --- 
 
+## String value pairs
+
+```swift
+typealias StringValuePair = [String : Any]
+
+protocol StringValuePairConvertible {
+    var stringValuePairs: StringValuePair {get}
+}
+
+```
+
+---
+
+## Make it work for collections too
+
+```swift
+extension Array where Element : StringValuePairConvertible {
+    var stringValuePairs: [StringValuePair] {
+        return self.map { $0.stringValuePairs }
+    }
+}
+```
+
+---
+
+## Bleet String value pairs
+
+```swift
+extension Bleet: StringValuePairConvertible {
+    var stringValuePairs: StringValuePair {
+        var result = StringValuePair()
+        
+        result["id"]          = "\(self.id!)"
+        result["author"]      = self.author
+        result["subscriber"]  = self.subscriber
+        result["message"]     = self.message
+        result["postdate"]    = "\(self.postDate)"
+
+        return result
+    }
+}
+```
+
+---
+
 ## Get back Blitter feed
 
 
@@ -306,21 +399,47 @@ getBleets { result in
 
 ---
 
-## Save a post
+## Get JSON from the request
 
 ```swift
-router.post("/") { request, response, next throws in
-   
-   guard let httpBody = request.body else { /* ... */ }
-   guard case let .json(json) = body else { /* ... */ }
-   guard let message = json["message"].stringValue { /* ... */ }
-   
-   let bleet = Bleet(id: UUID(), message, Date(), userId)
-   saveBleet(bleet) { result in
-       response.status(.OK).send().end()
-   }
+
+extension RouterRequest {
+    
+    var json: JSON? {
+        
+        guard let body = self.body else {
+            Log.warning("No body in the message")
+            return nil
+        }
+        
+        guard case let .json(json) = body else {
+            Log.warning("Body was not formed as JSON")
+            return nil
+        }
+        
+        return json
+    }
 }
 
+```
+
+--- 
+## Save the Bleet
+
+```swift
+      
+let userID = authenticate(request: request)
+        
+let jsonResult = request.json
+guard let json = jsonResult else {
+    response.status(.badRequest)
+    next()
+    return
+}
+        
+let message = json["message"].stringValue
+
+// Save the Bleets with author matching userID
 ```
 
 ---
