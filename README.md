@@ -25,16 +25,16 @@ On Linux, you can download the latest package from the website. If on macOS, you
 CQLsh is in the /bin directory of your Cassandra/ScyllaDB installation.
 
 `cqlsh -f blitter.sql`
+
+3. Install OpenSSL with:
+
+`brew install openssl`
   
 ### Generate an XCode project:
 
 `swift package generate-xcodeproj -Xswiftc -I/usr/local/opt/openssl/include -Xlinker -L/usr/local/opt/openssl/lib`
 
 ### Building and testing on Mac Terminal
-
-1. First, install OpenSSL with:
-
-`brew install openssl`
 
 2. Build the project
 
