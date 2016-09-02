@@ -12,15 +12,23 @@ An demonstration that uses the [Kitura web framework](https://github.com/IBM-Swi
 
 ## Quick start:
 
-1. Install Cassandra:
+You can build and run this demo on multiple platforms, such as XCode, macOS Terminal, Linux terminal, or a docker container. The quick start steps vary by how you intend to build the target.
 
-If on macOS, you can install it with Homebrew
+1. Install Cassandra or ScyllaDB:
+
+On Linux, you can download the latest package from the website. If on macOS, you can install it with Homebrew:
 
 `brew install cassandra`
-  
+
 2. Set up the schemas with the blitter.sql file:
 
+CQLsh is in the /bin directory of your Cassandra/ScyllaDB installation.
+
 `cqlsh -f blitter.sql`
+
+3. Install OpenSSL with:
+
+`brew install openssl`
   
 ### Generate an XCode project:
 
@@ -28,11 +36,11 @@ If on macOS, you can install it with Homebrew
 
 ### Building and testing on Mac Terminal
 
-1. Build the project
+2. Build the project
 
 `swift build -Xswiftc -I/usr/local/opt/openssl/include -Xlinker -L/usr/local/opt/openssl/lib`
   
-2. Test the project
+3. Test the project
 
 `swift test -Xswiftc -I/usr/local/opt/openssl/include -Xlinker -L/usr/local/opt/openssl/lib`
 
@@ -45,16 +53,6 @@ If on macOS, you can install it with Homebrew
 2. Test the project
 
 `swift test`
-
-## Using Docker
-
-1. Build your image with:
-
-`docker build -t blitter/latest .`
-
-2. Run your image:
-
-`docker run -t blitter/latest`
 
 ## License
 

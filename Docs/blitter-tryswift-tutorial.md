@@ -206,6 +206,59 @@ struct Bleet {
     
 }
 
+```
+
+--- 
+
+## String value pairs
+
+```swift
+typealias StringValuePair = [String : Any]
+
+protocol StringValuePairConvertible {
+    var stringValuePairs: StringValuePair {get}
+}
+
+```
+
+---
+
+## Make it work for collections too
+
+```swift
+extension Array where Element : StringValuePairConvertible {
+    var stringValuePairs: [StringValuePair] {
+        return self.map { $0.stringValuePairs }
+    }
+}
+```
+
+---
+
+## Bleet String value pairs
+
+```swift
+extension Bleet: StringValuePairConvertible {
+    var stringValuePairs: StringValuePair {
+        var result = StringValuePair()
+        
+        result["id"]          = "\(self.id!)"
+        result["author"]      = self.author
+        result["subscriber"]  = self.subscriber
+        result["message"]     = self.message
+        result["postdate"]    = "\(self.postDate)"
+
+        return result
+    }
+}
+```
+---
+
+## Add **Model** behavior
+
+```swift
+import Kassandra
+
 extension Bleet : Model {
   static let tableName = "bleet"
   
@@ -214,7 +267,6 @@ extension Bleet : Model {
 ```
 
 ---
-
 
 ## Save the Bleet
 
@@ -328,50 +380,7 @@ ___
 - Set up the model and database 
 - **Handle the requests**
 
---- 
 
-## String value pairs
-
-```swift
-typealias StringValuePair = [String : Any]
-
-protocol StringValuePairConvertible {
-    var stringValuePairs: StringValuePair {get}
-}
-
-```
-
----
-
-## Make it work for collections too
-
-```swift
-extension Array where Element : StringValuePairConvertible {
-    var stringValuePairs: [StringValuePair] {
-        return self.map { $0.stringValuePairs }
-    }
-}
-```
-
----
-
-## Bleet String value pairs
-
-```swift
-extension Bleet: StringValuePairConvertible {
-    var stringValuePairs: StringValuePair {
-        var result = StringValuePair()
-        
-        result["id"]          = "\(self.id!)"
-        result["author"]      = self.author
-        result["subscriber"]  = self.subscriber
-        result["message"]     = self.message
-        result["postdate"]    = "\(self.postDate)"
-
-        return result
-    }
-}
-```
 
 ---
 
@@ -405,16 +414,14 @@ getBleets { result in
 
 extension RouterRequest {
     
-    var json: JSON? {
+    var json: Result<JSON> {
         
         guard let body = self.body else {
-            Log.warning("No body in the message")
-            return nil
+            return .error(requestError("No body in the message"))
         }
         
         guard case let .json(json) = body else {
-            Log.warning("Body was not formed as JSON")
-            return nil
+            return .error(requestError("Body was not formed as JSON"))
         }
         
         return json
@@ -431,7 +438,7 @@ extension RouterRequest {
 let userID = authenticate(request: request)
         
 let jsonResult = request.json
-guard let json = jsonResult else {
+guard let json = jsonResult.result else {
     response.status(.badRequest)
     next()
     return
