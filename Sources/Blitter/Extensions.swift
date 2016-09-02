@@ -37,6 +37,13 @@ enum Result<T> {
         case .error: return nil
         }
     }
+    
+    var error: Error? {
+        switch self {
+        case .success: return nil
+        case .error(let error): return error
+        }
+    }
 }
 
 extension RouterRequest {

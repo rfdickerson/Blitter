@@ -160,16 +160,14 @@ import Credentials
 import CredentialsFacebook
 
 let credentials = Credentials()
-let facebookCredentials = CredentialsFacebook()
-
-credentials.register(fbCredentials)
+credentials.register(CredentialsFacebook())
 
 
 ```
 
 --- 
 
-# Using the Credentials middlware
+# Using the Credentials middleware
 
 ```swift
 
@@ -199,12 +197,13 @@ router.post("/") { request, response, next in
 
 ```swift
 struct Bleet {
-
-  let id:           UUID
-  let user:         String
-  let message:      String
-  let postDate:     Date
-
+    
+    var id          : UUID?
+    let author      : String
+    let subscriber  : String
+    let message     : String
+    let postDate    : Date
+    
 }
 
 extension Bleet : Model {
@@ -216,19 +215,39 @@ extension Bleet : Model {
 
 ---
 
+
+## Save the Bleet
+
+```swift
+
+let bleet = Bleet(id         : UUID(),
+                  author     : "Robert",
+                  subscriber : "Chris"
+                  message    : "I love Swift!",
+                  postDate   : Date()
+                  )
+
+try kassandra.connect(with: "blitter") { _ in
+    bleet.save()
+}
+
+```
+
+---
+
 ## Get the list of Bleets
 
 ```swift
 
-func getBleets(oncomplete: Result<[Bleet] -> Void) {
+func getBleets(oncomplete: (Result<[Bleet]>) -> Void) {
   try kassandra.connect(with: "blitter") { _ in
     Post.fetch(limit: 50) { bleets, error in 
      
-       guard let bleets = bleets else {
-          oncomplete( .error(BleetError.noBleets) )
+       if let error = error  {
+          oncomplete( .error(error) )
        }
        
-       let result = bleets.flatMap() { Bleet.init() }
+       let result = bleets.flatMap() { Bleet.init }
        oncomplete( .success(result) )
     }
 
@@ -236,23 +255,19 @@ func getBleets(oncomplete: Result<[Bleet] -> Void) {
 }
 ```
 
+
+
 ---
 
-
-## Save the Bleet
+## Get Bleets written by a user
 
 ```swift
+Bleet.fetch(predicate: "author" == user, 
+            limit: 50) { bleets, error in 
 
-let bleet = Bleet(id        : UUID(),
-                  user      : userId,
-                  body      : "I love Swift!",
-                  timestamp : Date()
-                  )
-
-try kassandra.connect(with: "blitter") { _ in
-    bleet.save()
+   /// 
+            
 }
-
 ```
 
 ___
@@ -273,16 +288,16 @@ ___
 ```swift
 
 
-getBleets { bleets, error in
+getBleets { result in
             
-    guard let bleets = bleets else {
+    guard let bleets = result.value else {
         response.status(.badRequest).send()
         response.next()
         return
     }
                 
     response.status(.OK)
-        .send(json: JSON(bleets.toDictionary()))
+        .send(json: JSON(bleets.stringValuePairs))
         response.next()
     }
 }
@@ -301,10 +316,9 @@ router.post("/") { request, response, next throws in
    guard let message = json["message"].stringValue { /* ... */ }
    
    let bleet = Bleet(id: UUID(), message, Date(), userId)
-   saveBleet(bleet)
-       .onSuccess {
-          response.status(.OK).send().end()
-       }
+   saveBleet(bleet) { result in
+       response.status(.OK).send().end()
+   }
 }
 
 ```
