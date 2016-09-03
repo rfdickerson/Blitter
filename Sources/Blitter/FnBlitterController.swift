@@ -33,21 +33,22 @@ private func cvt(_ functionalHandler: @escaping FnRouterHandler ) -> RouterHandl
         functionalHandler(request)
             .finally {
                 switch $0 {
-                case .error(let error): response.error = error
-                case .status(let status): response.status(status)
+                case .error(let error):
+                    response.error = error
+                    next()
+                case .status(let status):
+                    response.status(status)
+                    next()
                 case .json(let json):
                     ResultOrError( catching: { try response.status(.OK).send(json: json).end() } )
                         .ifFailure { response.error = $0 }
                 }
-                next()
         }
     }
 }
 // TODO: FnBlitterProtocol
 extension FnBlitterController {
-    
-    
-    
+
     public func bleet(request: RouterRequest) -> FutureRouterResponse {
         let future = FutureRouterResponse()
         let userID = authenticate(request: request, defaultUser: "Robert")
@@ -61,10 +62,13 @@ extension FnBlitterController {
         let message = json[Bleet.FieldNames.message.rawValue].stringValue
         
         // TODO: functionalize kassandra
-        do {try self.kassandra.connect(with: "blitter") { result in
-            
-            let sql = "SELECT subscriber FROM subscription WHERE author='\(userID)'"
-            self.kassandra.execute(sql){ result in
+        kassandra.connect(with: "blitter")
+            .then {
+                _ in
+                "SELECT subscriber FROM subscription WHERE author='\(userID)'" |> self.kassandra.execute
+            }
+            .finally {
+                result in
                 let rows = result.asRows!
                 
                 let subscribers: [String] = rows.flatMap {
@@ -82,30 +86,29 @@ extension FnBlitterController {
                 newbleets.forEach { $0.save() { _ in } }
                 
                 future.write(.status(.OK))
-            }
-            
-            }
         }
-        catch { future.write(.error(error)) }
         return future
     }
+    
     
     public func getMyFeed(request: RouterRequest) -> FutureRouterResponse {
         let future = FutureRouterResponse()
         
         let userID = authenticate(request: request, defaultUser: "Jack")
         
-        do {
-            try kassandra.connect(with: "blitter") { result in
-                Bleet.fetch(predicate: Bleet.Field.subscriber.rawValue == userID, limit: 50) { bleets, error in
+        kassandra.connect(with: "blitter")
+            .finally {
+                result in
+                Bleet.fetch(predicate: Bleet.Field.subscriber.rawValue == userID, limit: 50) {
+                    bleets, error in
                     if let twts = bleets {
                         future.write( .json( JSON(twts.stringValuePairs) ) )
                     }
+                    else {
+                        // no next??
+                    }
                 }
-            }
         }
-        catch { future.write(.error(error)) }
-        
         return future
     }
     
@@ -117,22 +120,20 @@ extension FnBlitterController {
             future.write( .status(.badRequest) )
             return future
         }
-        do {
-            try kassandra.connect(with: "blitter") { result in
-                Bleet.fetch(predicate: Bleet.Field.author.rawValue == myUsername, limit: 50) { bleets, error in
-                    
+        kassandra.connect(with: "blitter")
+            .finally {
+                result in
+                Bleet.fetch(predicate: Bleet.Field.author.rawValue == myUsername, limit: 50) {
+                    bleets, error in
                     if let twts = bleets {
                         future.write( .json( JSON(twts.stringValuePairs) ) )
                     }
                 }
-            }
         }
-        catch { future.write(.error(error)) }
-        
         return future
     }
-    
-    
+
+
     public func followAuthor(request: RouterRequest) -> FutureRouterResponse {
         let future = FutureRouterResponse()
         
@@ -142,14 +143,13 @@ extension FnBlitterController {
             future.write( .status(.badRequest) )
             return future
         }
-        do {
-            try kassandra.connect(with: "blitter") { _ in
-                Subscription.insert([.id: UUID(), .author: author, .subscriber: myUsername]).execute { result in
+        kassandra.connect(with: "blitter")
+            .finally { _ in
+                Subscription.insert([.id: UUID(), .author: author, .subscriber: myUsername]).execute {
+                    result in
                     future.write( .status(.OK) )
                 }
             }
-        }
-        catch { future.write(.error(error)) }
         
         return future
     }

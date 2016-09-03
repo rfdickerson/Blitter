@@ -27,7 +27,7 @@ enum BlitterError : Error {
     case noJSON
 }
 
-enum Result<T> {
+enum BlitterResult<T> {
     case success(T)
     case error(Error)
     
