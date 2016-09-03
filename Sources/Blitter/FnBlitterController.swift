@@ -46,8 +46,9 @@ private func cvt(_ functionalHandler: @escaping FnRouterHandler ) -> RouterHandl
         }
     }
 }
-// TODO: FnBlitterProtocol
-extension FnBlitterController {
+
+
+extension FnBlitterController: FnBlitterProtocol {
 
     public func bleet(request: RouterRequest) -> FutureRouterResponse {
         let userID = authenticate(request: request, defaultUser: "Robert")
@@ -63,25 +64,22 @@ extension FnBlitterController {
         return kassandra.connect(with: "blitter")
             .then {
                 _ in
-                "SELECT subscriber FROM subscription WHERE author='\(userID)'" |> self.kassandra.execute
+                "SELECT subscriber FROM subscription WHERE author='\(userID)'"
+                    |> self.kassandra.execute
             }
             .then {
                 result -> FnRouterResponse in
-                let rows = result.asRows!
-                
-                let subscribers: [String] = rows.flatMap {
-                    $0[Subscription.Field.subscriber.rawValue] as? String
-                }
-                
-                let newbleets: [Bleet] = subscribers.map {
-                    Bleet( id:          UUID(),
-                           author:      userID,
-                           subscriber:  $0,
-                           message:     message,
-                           postDate:    Date())
-                }
-                
-                newbleets.forEach { $0.save() { _ in } }
+                result
+                    .asRows!
+                    .flatMap {  $0[Subscription.Field.subscriber.rawValue] as? String }
+                    .map {
+                        Bleet( id:          UUID(),
+                               author:      userID,
+                               subscriber:  $0,
+                               message:     message,
+                               postDate:    Date())
+                    }
+                    .forEach { $0.save() {_ in } }
                 
                 return .status(.OK)
         }
@@ -93,16 +91,10 @@ extension FnBlitterController {
         
         return kassandra.connect(with: "blitter")
             .then {
-                result in
+                _ in
                 Bleet.fetch(predicate: Bleet.Field.subscriber.rawValue == userID, limit: 50)
             }
-            .then {
-                r -> FnRouterResponse in
-                switch r {
-                case .success(let bleets): return .json( JSON(bleets.stringValuePairs) )
-                case .failure(let error):  return .error(error)
-                }
-        }
+            .then ( FnRouterResponse.init(bleets:) )
     }
     
     
@@ -112,16 +104,10 @@ extension FnBlitterController {
         }
         return kassandra.connect(with: "blitter")
             .then {
-                result in
+                _ in
                 Bleet.fetch(predicate: Bleet.Field.author.rawValue == myUsername, limit: 50)
             }
-            .then {
-                r -> FnRouterResponse in
-                switch r {
-                case .success(let bleets): return .json( JSON(bleets.stringValuePairs))
-                case .failure(let error):  return .error( error )
-                }
-        }
+            .then ( FnRouterResponse.init(bleets:) )
     }
     
     
@@ -138,8 +124,8 @@ extension FnBlitterController {
                     .execute()
             }
             .then {
-                _ -> FnRouterResponse in
-                .status(.OK)
+                _ in
+                FnRouterResponse.status(.OK)
         }
     }
 }

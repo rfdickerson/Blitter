@@ -17,7 +17,15 @@ public enum FnRouterResponse {
     case error(Swift.Error)
     case status(HTTPStatusCode)
     case json(JSON)
+    
+    init(bleets: ResultOrError<[Bleet]>) {
+        switch bleets {
+        case .failure(let error): self = .error(error)
+        case .success(let r):     self = .json( JSON(r.stringValuePairs) )
+        }
+    }
 }
 
 public typealias FutureRouterResponse = Future<FnRouterResponse>
 public typealias FnRouterHandler = (RouterRequest) -> FutureRouterResponse
+
