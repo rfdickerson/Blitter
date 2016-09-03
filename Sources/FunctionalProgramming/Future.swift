@@ -62,6 +62,19 @@ public class Future<Outcome> {
         return future
     }
     
+    public func then<NewOutcome>(
+        qos: FutureQOS = .userInitiated,
+        _ fn: @escaping (Outcome) -> NewOutcome
+        )
+        -> Future<NewOutcome>
+    {
+        let future = Future<NewOutcome>()
+        finally(qos: qos) {
+            fn($0) |> future.write
+        }
+        return future
+    }
+    
     public func finally(
         qos: FutureQOS = .userInitiated,
         _ reader: @escaping (Outcome) -> Void

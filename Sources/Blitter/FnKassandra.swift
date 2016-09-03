@@ -38,3 +38,25 @@ public extension Kassandra {
         return future
     }
 }
+
+
+public extension Model {
+    public static func fetch(_ fields: [Field] = [], predicate: Predicate? = nil, limit: Int? = nil) -> Future<ResultOrError<[Self]>> {
+        let future = Future<ResultOrError<[Self]>>()
+        fetch(fields, predicate: predicate, limit: limit) {
+            selves, error in
+            ( error.map { .failure($0) } ?? .success( selves ?? [] ) )
+            |> future.write
+        }
+        return future
+    }
+}
+
+
+public extension Query {
+    public func execute() -> Future<KassandraResult> {
+        let future = Future<KassandraResult>()
+        execute { future.write($0) }
+        return future
+    }
+}

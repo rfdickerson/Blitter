@@ -50,25 +50,23 @@ private func cvt(_ functionalHandler: @escaping FnRouterHandler ) -> RouterHandl
 extension FnBlitterController {
 
     public func bleet(request: RouterRequest) -> FutureRouterResponse {
-        let future = FutureRouterResponse()
         let userID = authenticate(request: request, defaultUser: "Robert")
         
         let jsonResult = request.json
         guard let json = jsonResult else {
-            future.write( .status(.badRequest) )
-            return future
+            return Future(outcome: .status(.badRequest) )
         }
         
         let message = json[Bleet.FieldNames.message.rawValue].stringValue
         
         // TODO: functionalize kassandra
-        kassandra.connect(with: "blitter")
+        return kassandra.connect(with: "blitter")
             .then {
                 _ in
                 "SELECT subscriber FROM subscription WHERE author='\(userID)'" |> self.kassandra.execute
             }
-            .finally {
-                result in
+            .then {
+                result -> FnRouterResponse in
                 let rows = result.asRows!
                 
                 let subscribers: [String] = rows.flatMap {
@@ -85,74 +83,63 @@ extension FnBlitterController {
                 
                 newbleets.forEach { $0.save() { _ in } }
                 
-                future.write(.status(.OK))
+                return .status(.OK)
         }
-        return future
     }
     
     
     public func getMyFeed(request: RouterRequest) -> FutureRouterResponse {
-        let future = FutureRouterResponse()
-        
         let userID = authenticate(request: request, defaultUser: "Jack")
         
-        kassandra.connect(with: "blitter")
-            .finally {
+        return kassandra.connect(with: "blitter")
+            .then {
                 result in
-                Bleet.fetch(predicate: Bleet.Field.subscriber.rawValue == userID, limit: 50) {
-                    bleets, error in
-                    if let twts = bleets {
-                        future.write( .json( JSON(twts.stringValuePairs) ) )
-                    }
-                    else {
-                        // no next??
-                    }
+                Bleet.fetch(predicate: Bleet.Field.subscriber.rawValue == userID, limit: 50)
+            }
+            .then {
+                r -> FnRouterResponse in
+                switch r {
+                case .success(let bleets): return .json( JSON(bleets.stringValuePairs) )
+                case .failure(let error):  return .error(error)
                 }
         }
-        return future
     }
     
     
     public func getUserFeed(request: RouterRequest) -> FutureRouterResponse {
-        let future = FutureRouterResponse()
-        
         guard let myUsername = request.parameters["user"] else {
-            future.write( .status(.badRequest) )
-            return future
+            return Future(outcome: .status(.badRequest) )
         }
-        kassandra.connect(with: "blitter")
-            .finally {
+        return kassandra.connect(with: "blitter")
+            .then {
                 result in
-                Bleet.fetch(predicate: Bleet.Field.author.rawValue == myUsername, limit: 50) {
-                    bleets, error in
-                    if let twts = bleets {
-                        future.write( .json( JSON(twts.stringValuePairs) ) )
-                    }
+                Bleet.fetch(predicate: Bleet.Field.author.rawValue == myUsername, limit: 50)
+            }
+            .then {
+                r -> FnRouterResponse in
+                switch r {
+                case .success(let bleets): return .json( JSON(bleets.stringValuePairs))
+                case .failure(let error):  return .error( error )
                 }
         }
-        return future
     }
-
-
+    
+    
     public func followAuthor(request: RouterRequest) -> FutureRouterResponse {
-        let future = FutureRouterResponse()
-        
         let myUsername = authenticate(request: request, defaultUser: "Jack")
         
         guard let author = request.parameters["user"] else {
-            future.write( .status(.badRequest) )
-            return future
+            return Future(outcome: .status(.badRequest) )
         }
-        kassandra.connect(with: "blitter")
-            .finally { _ in
-                Subscription.insert([.id: UUID(), .author: author, .subscriber: myUsername]).execute {
-                    result in
-                    future.write( .status(.OK) )
-                }
+        return kassandra.connect(with: "blitter")
+            .then {
+                _ in
+                Subscription.insert([.id: UUID(), .author: author, .subscriber: myUsername])
+                    .execute()
             }
-        
-        return future
+            .then {
+                _ -> FnRouterResponse in
+                .status(.OK)
+        }
     }
-    
-    
 }
