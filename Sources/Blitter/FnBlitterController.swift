@@ -32,17 +32,7 @@ private func cvt(_ functionalHandler: @escaping FnRouterHandler ) -> RouterHandl
         
         functionalHandler(request)
             .finally {
-                switch $0 {
-                case .error(let error):
-                    response.error = error
-                    next()
-                case .status(let status):
-                    response.status(status)
-                    next()
-                case .json(let json):
-                    ResultOrError( catching: { try response.status(.OK).send(json: json).end() } )
-                        .ifFailure { response.error = $0 }
-                }
+                $0.fillIn(response: response, next: next)
         }
     }
 }

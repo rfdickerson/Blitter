@@ -24,6 +24,20 @@ public enum FnRouterResponse {
         case .success(let r):     self = .json( JSON(r.stringValuePairs) )
         }
     }
+    
+    func fillIn(response: RouterResponse, next: () -> Void) {
+        switch self {
+        case .error(let error):
+            response.error = error
+            next()
+        case .status(let status):
+            response.status(status)
+            next()
+        case .json(let json):
+            ResultOrError( catching: { try response.status(.OK).send(json: json).end() } )
+                .ifFailure { response.error = $0 }
+        }
+    }
 }
 
 public typealias FutureRouterResponse = Future<FnRouterResponse>
