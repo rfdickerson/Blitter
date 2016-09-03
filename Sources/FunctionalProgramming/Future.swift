@@ -11,6 +11,7 @@ import Foundation
 //: Simple Future implementation, no errors, no composition
 //: Leaks memory, most likely
 
+// MARK: - first, basic future without ResultOrError
 
 public class Future<Outcome> {
     private typealias Reader = (Outcome) -> Void
@@ -27,6 +28,11 @@ public class Future<Outcome> {
     
     
     public init() {}
+    
+    public convenience init(outcome: Outcome) {
+        self.init()
+        write(outcome)
+    }
     
     
     public func write(_ outcome: Outcome) -> Void {
@@ -76,6 +82,31 @@ public class Future<Outcome> {
 }
 
 
+// MARK: - constructors with result or error. Not easily coded as constructors
+
+extension Future {
+
+    public static func with<Result>(result: Result) -> Future<ResultOrError<Result>>  {
+        return Future<ResultOrError<Result>>(outcome: .success( result ))
+    }
+    public static func with<Result>(error: Error) -> Future<ResultOrError<Result>>  {
+        return Future<ResultOrError<Result>>(outcome: .failure( error ))
+    }
+    
+    public static func catching<Result>(_ fn: () throws -> Future<Result>)  ->  Future<ResultOrError<Result>> {
+        typealias MyFuture = Future<ResultOrError<Result>>
+        do {
+            return try fn().then (with(result:))
+        }
+        catch {
+            return with(error: error)
+        }
+    }
+}
+
+
+// MARK: - members when outcome is result or error. Finagling with protocols to do it.
+
 public protocol ResultOrErrorProtocol {
     associatedtype Result
     var asResultOrError: ResultOrError<Result> { get }
@@ -85,6 +116,7 @@ extension ResultOrError: ResultOrErrorProtocol {
 }
 
 public extension Future where Outcome: ResultOrErrorProtocol {
+    
     
     // Consuming function produces a Future:
     public func thenIfSuccess<NewResult>( _ fn: @escaping (Outcome.Result) -> Future<ResultOrError<NewResult>>) -> Future<ResultOrError<NewResult>> {

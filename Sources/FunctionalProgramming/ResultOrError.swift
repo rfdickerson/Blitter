@@ -8,6 +8,8 @@
 
 import Foundation
 
+public typealias VoidOrError = ResultOrError<Void>
+
 public enum ResultOrError<Result> {
     case failure(Error)
     case success(Result)
@@ -41,6 +43,14 @@ public enum ResultOrError<Result> {
             return .failure(AlreadyHandledError(error: e))
         }
     }
+    
+    // integration with synchronous errors
+    
+    public init( catching fn: () throws -> Result ) {
+        do      { self = try .success(  fn()  ) }
+        catch   { self = .failure(  error ) }
+    }
+    
 }
 
 

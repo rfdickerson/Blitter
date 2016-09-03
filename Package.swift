@@ -20,10 +20,13 @@ let package = Package(
     name: "Blitter",
     targets: [
         Target(
+            name: "FunctionalProgramming"
+        ),
+        Target(
             name: "BlitterServer", dependencies: [.Target(name: "Blitter")]
         ),
         Target(
-            name: "Blitter"
+            name: "Blitter", dependencies: [.Target(name: "FunctionalProgramming")]
         )
     ],
     dependencies: [
