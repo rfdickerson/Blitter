@@ -23,6 +23,9 @@ let package = Package(
             name: "FunctionalProgramming"
         ),
         Target(
+            name: "FnBlitterServer", dependencies: [.Target(name: "Blitter")]
+        ),
+        Target(
             name: "BlitterServer", dependencies: [.Target(name: "Blitter")]
         ),
         Target(
