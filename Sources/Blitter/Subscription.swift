@@ -18,6 +18,8 @@ import Foundation
 import Kassandra
 
 struct Subscription {
+    enum FieldNames: String { case id, author, subscriber }
+    
     var id: UUID?
     let author: String
     let subscriber: String
@@ -25,11 +27,7 @@ struct Subscription {
 
 extension Subscription: Model {
     
-    enum Field: String {
-        case id         = "id"
-        case author     = "author"
-        case subscriber = "subscriber"
-    }
+    typealias Field = FieldNames
     
     static let tableName = "subscription"
     
@@ -51,8 +49,8 @@ extension Subscription: Model {
     }
     
     init(row: Row) {
-        self.id         = row["id"] as? UUID
-        self.author     = row["author"] as! String
-        self.subscriber   = row["subscriber"] as! String
+        self.id         = row[Field.id         .rawValue] as? UUID
+        self.author     = row[Field.author     .rawValue] as! String
+        self.subscriber = row[Field.subscriber .rawValue] as! String
     }
 }

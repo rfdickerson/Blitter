@@ -49,7 +49,7 @@ extension BlitterController: BlitterProtocol {
             return
         }
         
-        let message = json["message"].stringValue
+        let message = json[Bleet.FieldNames.message.rawValue].stringValue
         
         try self.kassandra.connect(with: "blitter") { result in
             
@@ -58,7 +58,7 @@ extension BlitterController: BlitterProtocol {
                 let rows = result.asRows!
                 
                 let subscribers: [String] = rows.flatMap {
-                    return $0["subscriber"] as? String
+                    return $0[Subscription.Field.subscriber.rawValue] as? String
                 }
                 
                 let newbleets: [Bleet] = subscribers.map {
@@ -83,7 +83,7 @@ extension BlitterController: BlitterProtocol {
         let userID = authenticate(request: request, defaultUser: "Jack")
         
         try kassandra.connect(with: "blitter") { result in
-            Bleet.fetch(predicate: "subscriber" == userID, limit: 50) { bleets, error in
+            Bleet.fetch(predicate: Bleet.Field.subscriber.rawValue == userID, limit: 50) { bleets, error in
                 if let twts = bleets {
                     do {
                         try response.status(.OK).send(json: JSON(twts.stringValuePairs)).end()
@@ -105,7 +105,7 @@ extension BlitterController: BlitterProtocol {
         }
         
         try kassandra.connect(with: "blitter") { result in
-            Bleet.fetch(predicate: "author" == myUsername, limit: 50) { bleets, error in
+        Bleet.fetch(predicate: Bleet.Field.author.rawValue == myUsername, limit: 50) { bleets, error in
                 
                 if let twts = bleets {
                     do {

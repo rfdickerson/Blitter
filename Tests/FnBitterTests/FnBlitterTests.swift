@@ -23,14 +23,14 @@ import SwiftyJSON
 
 @testable import Blitter
 
-class BlitterTests: XCTestCase {
+class FnBlitterTests: XCTestCase {
     
     
     private let queue = DispatchQueue(label: "Kitura runloop", qos: .userInitiated, attributes: .concurrent)
     
-    private let blitterController = BlitterController()
+    private let blitterController = FnBlitterController()
     
-    static var allTests : [(String, (BlitterTests) -> () throws -> Void)] {
+    static var allTests : [(String, (FnBlitterTests) -> () throws -> Void)] {
         return [
             ("testFollowAuthor", testFollowAuthor),
             ("testGetAllMyFeeds", testGetAllMyFeeds),
