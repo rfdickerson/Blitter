@@ -3,32 +3,32 @@
 An demonstration that uses the [Kitura web framework](https://github.com/IBM-Swift/Kitura) to produce a feed of posts that people can follow.
 
 ![](https://img.shields.io/badge/Swift-3.0-orange.svg?style=flat)
-![](https://img.shields.io/badge/Snapshot-8/30-blue.svg?style=flat)
+![](https://img.shields.io/badge/Snapshot-9/06-blue.svg?style=flat)
 
 ## Requires:
 
- - [XCode 8 beta 6](https://developer.apple.com/)
+ - [XCode 8](https://developer.apple.com/xcode/)
  - [Cassandra 3.4+](http://cassandra.apache.org/) or [ScyllaDB](http://www.scylladb.com/)
 
 ## Quick start:
 
-You can build and run this demo on multiple platforms, such as XCode, macOS Terminal, Linux terminal, or a docker container. The quick start steps vary by how you intend to build the target.
+ You can build and run this demo on multiple platforms, such as XCode, macOS Terminal, Linux terminal, or a docker container. The quick start steps vary by how you intend to build the target.
 
 1. Install Cassandra or ScyllaDB:
 
-On Linux, you can download the latest package from the website. If on macOS, you can install it with Homebrew:
+ On Linux, you can download the latest package from the website. If on macOS, you can install it with Homebrew:
 
-`brew install cassandra`
+ `brew install cassandra`
 
 2. Set up the schemas with the blitter.sql file:
 
-CQLsh is in the /bin directory of your Cassandra/ScyllaDB installation.
+ CQLsh is in the /bin directory of your Cassandra/ScyllaDB installation.
 
-`cqlsh -f blitter.sql`
+ `cqlsh -f blitter.sql`
 
 3. Install OpenSSL with:
 
-`brew install openssl`
+ `brew install openssl`
   
 ### Generate an XCode project:
 
