@@ -32,27 +32,27 @@ An demonstration that uses the [Kitura web framework](https://github.com/IBM-Swi
   
 ### Generate an XCode project:
 
-`swift package generate-xcodeproj -Xswiftc -I/usr/local/opt/openssl/include -Xlinker -L/usr/local/opt/openssl/lib`
+ `swift package generate-xcodeproj -Xswiftc -I/usr/local/opt/openssl/include -Xlinker -L/usr/local/opt/openssl/lib`
 
 ### Building and testing on Mac Terminal
 
-2. Build the project
+1. Build the project
 
-`swift build -Xswiftc -I/usr/local/opt/openssl/include -Xlinker -L/usr/local/opt/openssl/lib`
+ `swift build -Xswiftc -I/usr/local/opt/openssl/include -Xlinker -L/usr/local/opt/openssl/lib`
   
-3. Test the project
+2. Test the project
 
-`swift test -Xswiftc -I/usr/local/opt/openssl/include -Xlinker -L/usr/local/opt/openssl/lib`
+ `swift test -Xswiftc -I/usr/local/opt/openssl/include -Xlinker -L/usr/local/opt/openssl/lib`
 
 ### Building and testing in Linux
 
 1. Build the project
 
-`swift build`
+ `swift build`
   
 2. Test the project
 
-`swift test`
+ `swift test`
 
 ## License
 
