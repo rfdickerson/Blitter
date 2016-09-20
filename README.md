@@ -2,8 +2,9 @@
 
 An demonstration that uses the [Kitura web framework](https://github.com/IBM-Swift/Kitura) to produce a feed of posts that people can follow.
 
-![](https://img.shields.io/badge/Swift-3.0-orange.svg?style=flat)
-![](https://img.shields.io/badge/Snapshot-9/06-blue.svg?style=flat)
+[![Build Status](https://travis-ci.org/IBM-Swift/Blitter.svg?branch=master)](https://travis-ci.org/IBM-Swift/Blitter)
+![](https://img.shields.io/badge/Swift-3.0%20RELEASE-orange.svg?style=flat)
+![](https://img.shields.io/badge/platform-Linux,%20macOS-blue.svg?style=flat)
 
 ## Requires:
 
@@ -32,17 +33,10 @@ An demonstration that uses the [Kitura web framework](https://github.com/IBM-Swi
   
 ### Generate an XCode project:
 
+You can use XCode to edit, build, test, and debug your code. To generate an XCode project, you can use the Swift Package Manager to generate one for you. Since we must use the OpenSSL header and library files, we must specify the search paths for these files to the generator script.
+
  `swift package generate-xcodeproj -Xswiftc -I/usr/local/opt/openssl/include -Xlinker -L/usr/local/opt/openssl/lib`
 
-### Building and testing on Mac Terminal
-
-1. Build the project
-
- `swift build -Xswiftc -I/usr/local/opt/openssl/include -Xlinker -L/usr/local/opt/openssl/lib`
-  
-2. Test the project
-
- `swift test -Xswiftc -I/usr/local/opt/openssl/include -Xlinker -L/usr/local/opt/openssl/lib`
 
 ### Building and testing in Linux
 
