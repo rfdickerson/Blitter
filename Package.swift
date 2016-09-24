@@ -34,8 +34,8 @@ let package = Package(
     ],
     dependencies: [
         .Package(url: "https://github.com/IBM-Swift/Kassandra",                   majorVersion: 0,  minor: 2),
-        .Package(url: "https://github.com/IBM-Swift/Kitura.git",                  majorVersion: 0,  minor: 33),
-        .Package(url: "https://github.com/IBM-Swift/Kitura-CredentialsFacebook",  majorVersion: 0,  minor: 33),
-        .Package(url: "https://github.com/IBM-Swift/HeliumLogger",                majorVersion: 0,  minor: 17),
+        .Package(url: "https://github.com/IBM-Swift/Kitura.git",                  majorVersion: 1,  minor: 0),
+        .Package(url: "https://github.com/IBM-Swift/Kitura-CredentialsFacebook",  majorVersion: 1,  minor: 0),
+        .Package(url: "https://github.com/IBM-Swift/HeliumLogger",                majorVersion: 1,  minor: 0),
         ]
 )
